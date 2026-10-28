@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EEGNet Experiment Management (Prototype)</title>
+<!-- Flask: @app.route("/experiments")  def experiments(): return render_template("experiments.html")
+     CSS is inline for a self-contained demo; move it into static/style.css (reusing your existing variables) when integrating. -->
+<style>
+:root{--paper:#f2f4f3;--card:#fff;--ink:#16212b;--mute:#5b6a74;--rule:#c9d3d1;--A:#8494a0;--B:#0f5c63;--C:#c27c0e;--sz:#b4234f;--szbg:#f6dfe6;--okbg:#e1ecea;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--serif:Charter,"Bitstream Charter","Iowan Old Style",Georgia,serif}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:1rem/1.6 var(--serif)}
+.bar{background:var(--sz);color:#fff;font:600 .82rem var(--mono);text-align:center;padding:8px 12px;position:sticky;top:0;z-index:5}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px 60px}
+nav{display:flex;gap:18px;padding:16px 0;font:.85rem var(--mono);flex-wrap:wrap}nav a{color:var(--mute);text-decoration:none}nav a:hover,nav a.on{color:var(--ink)}
+h1{font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.1;letter-spacing:-.02em;margin:10px 0 8px}h2{font-size:1.4rem;margin:44px 0 6px}h3{font-size:1rem;margin:0 0 10px}
+.sub,.fine{color:var(--mute)}.fine{font:.76rem/1.5 var(--mono)}
+.card{background:var(--card);border:1px solid var(--rule);padding:18px 20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+label{display:block;font-size:.82rem;font-weight:700;margin:12px 0 3px}label span{font-weight:400;color:var(--mute);display:block;font-size:.75rem}
+input,select{width:100%;font:.88rem var(--mono);padding:7px 8px;border:1px solid var(--rule);background:#fff;color:var(--ink)}
+input[type=checkbox]{width:auto}.chk{display:flex;gap:8px;align-items:center;font-weight:400;margin:10px 0}.chk input{margin:0}
+.ro{font:.85rem var(--mono);display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dotted var(--rule)}.ro span:first-child{color:var(--mute)}
+.tag{display:inline-block;font:700 .68rem var(--mono);padding:2px 7px;background:var(--rule);color:var(--ink);vertical-align:middle}.tag.ex{background:#f3e3c3}
+.sim{font:.65rem var(--mono);color:var(--C);margin-left:4px}
+button{font:700 .85rem var(--mono);padding:10px 16px;border:1px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer}button:hover{background:var(--okbg)}
+button.pri{background:var(--B);color:#fff;border-color:var(--B)}button.dng{color:var(--sz);border-color:var(--sz)}button:disabled{opacity:.4;cursor:not-allowed}
+.badge{font:700 .75rem var(--mono);padding:3px 10px;color:#fff;background:var(--A)}.b-Queued{background:var(--C)}.b-Running{background:#2467a8}.b-Completed{background:var(--B)}.b-Stopped{background:var(--sz)}.b-Idle{background:var(--A)}
+.prog{height:12px;background:var(--rule);margin:10px 0}.prog i{display:block;height:100%;width:0;background:var(--B);transition:width .5s}
+.m{background:var(--paper);padding:12px}.m b{display:block;font:600 1.5rem var(--mono)}.m span{font-size:.78rem;color:var(--mute)}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font:.84rem var(--mono)}th,td{padding:9px 10px;border-bottom:1px solid var(--rule);text-align:left;white-space:nowrap}th{font:600 .8rem var(--serif);color:var(--mute);border-bottom:1px solid var(--ink)}
+.chart{width:100%;height:auto;display:block}.chart text{font:10px var(--mono);fill:var(--mute)}
+.key{font:.75rem var(--mono);color:var(--mute);display:flex;gap:14px;flex-wrap:wrap}.key i{display:inline-block;width:10px;height:10px;margin-right:5px}
+.hb{display:flex;align-items:center;gap:8px;font:.8rem var(--mono);margin:7px 0}.hb em{width:80px;font-style:normal;color:var(--mute)}.hb div{flex:1;height:12px;background:var(--rule)}.hb i{display:block;height:100%;background:var(--B)}
+.mx{display:grid;grid-template-columns:90px 1fr 1fr;font:.8rem var(--mono);max-width:380px}.mx>*{padding:10px 6px}.mx .h,.mx .r{color:var(--mute);font-size:.7rem;text-align:center}.mx .c{text-align:center;font-size:1.3rem;font-weight:600;border:1px solid var(--rule);margin:-1px 0 0 -1px}.mx small{display:block;font-size:.62rem;font-weight:400;color:var(--mute)}.ok{background:var(--okbg);color:var(--B)}.bad{background:var(--szbg);color:var(--sz)}
+.note{border-left:3px solid var(--sz);padding:2px 0 2px 14px;margin:14px 0}.hist{border-left-color:var(--B)}.simn{border-left-color:var(--C)}
+.bub{background:var(--paper);border:1px solid var(--rule);padding:14px 16px;margin:10px 0}.bub h4{margin:0 0 6px;font:700 .78rem var(--mono);color:var(--B);text-transform:uppercase;letter-spacing:.04em}.bub ul{margin:0;padding-left:1.1em}.bub li{margin-bottom:5px}
+.dots span{display:inline-block;width:8px;height:8px;margin-right:5px;background:var(--B);animation:b 1s infinite}.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}@keyframes b{50%{opacity:.2}}
+.crit{list-style:none;padding:0;margin:0}.crit li{padding:8px 0;border-top:1px solid var(--rule);font-size:.9rem;display:flex;justify-content:space-between;gap:10px}.crit em{font:.7rem var(--mono);color:var(--mute);font-style:normal}
+[title]{cursor:help}.hide{display:none}
+@media(max-width:860px){.g2,.g3{grid-template-columns:1fr}.g4{grid-template-columns:1fr 1fr}}
+@media(prefers-reduced-motion:reduce){.dots span{animation:none}.prog i{transition:none}}
+</style></head><body>
+<div class="bar">Prototype mode — experiment execution and progress are simulated.</div>
+<div class="wrap">
+<nav><a href="index.html" style="display:inline-block;padding:10px 18px;background:#fff;color:#16212b;font:700 .85rem ui-monospace,Menlo,Consolas,monospace;text-decoration:none;border:1px solid #16212b;">← Dashboard</a><a href="#config" class="on">Configuration</a><a href="#run">Run</a><a href="#history">History</a><a href="#results">Results</a><a href="#judge">AI Analyst</a></nav>
+<h1>Experiment management</h1>
+<p class="sub">Configure, launch and compare EEGNet seizure-detection experiments. Nothing here trains a model, runs a script or modifies a file.</p>
+
+<h2 id="config">Configuration <span class="tag ex">example configuration values</span></h2>
+<p class="sub">Defaults are illustrative, based on the project setup. They are not verified live settings.</p>
+<div class="g3">
+<div class="card"><h3>Dataset &amp; preprocessing</h3>
+<label>Dataset<select id="dataset"><option>EEG seizure corpus (19-channel, patient-level split)</option></select></label>
+<label>Data strategy<span>How the training set is balanced. Validation and test stay unchanged.</span><select id="strategy"><option value="A">Original imbalanced dataset</option><option value="B">Undersampling 1:5</option><option value="C">Balanced undersampling 1:1</option></select></label>
+<div class="ro" style="margin-top:10px"><span>Train</span><span id="trn"></span></div><div class="ro"><span>Validation</span><span>4 patients · 5,550 win.</span></div><div class="ro"><span>Test</span><span>3 patients · 6,077 win.</span></div>
+<div class="ro"><span title="Samples per second per channel">Sampling frequency</span><span>256 Hz</span></div><div class="ro"><span>Window duration</span><span>2 s (512 samples)</span></div><div class="ro"><span>EEG channels</span><span>19</span></div><div class="ro"><span title="Frequencies outside this band are attenuated">Bandpass filter</span><span>0.5–40 Hz</span></div><div class="ro"><span title="Consecutive windows share half their samples">Window overlap</span><span>50%</span></div></div>
+
+<div class="card"><h3>Model</h3>
+<label>Model<span>More models can be added to this list later.</span><select id="model"><option>EEGNet</option><option disabled>EEGNet-v2 (planned)</option><option disabled>ShallowConvNet (planned)</option></select></label>
+<label>EEG channels<input id="mch" type="number" value="19"></label>
+<label>Number of classes<span>seizure / non-seizure</span><input id="mcl" type="number" value="2"></label>
+<label>Window samples<span>2 s × 256 Hz</span><input id="msm" type="number" value="512"></label>
+<label>Dropout<input id="mdr" type="number" step=".05" value="0.5"></label>
+<p class="fine">Architecture fields are example values; a model registry could populate this card dynamically.</p></div>
+
+<div class="card"><h3>Training</h3>
+<div class="g2" style="gap:10px">
+<label>Epochs<input id="epochs" type="number" value="30" min="1" max="100"></label>
+<label>Batch size<input id="batch" type="number" value="64"></label>
+<label>Learning rate<input id="lr" type="number" step="0.0001" value="0.001"></label>
+<label>Weight decay<input id="wd" type="number" step="0.0001" value="0.0001"></label>
+<label>Optimizer<select id="opt"><option>Adam</option><option>AdamW</option><option>SGD</option></select></label>
+<label>Random seed<input id="seed" type="number" value="42"></label></div>
+<label>Loss function<select id="loss"><option>Class-weighted cross-entropy</option><option>Cross-entropy</option><option>Focal loss</option></select></label>
+<label>LR scheduler<select id="sched"><option>ReduceLROnPlateau</option><option>Cosine annealing</option><option>None</option></select></label>
+<label>Checkpoint metric<select id="ckm"><option>Validation PR-AUC</option><option>Validation F1</option><option>Validation loss</option></select></label>
+<label>Threshold strategy<select id="thr"><option>Maximize validation F1</option><option>Fixed 0.5</option><option>Target recall on validation</option></select></label>
+<label>Device<select id="dev"><option>CPU</option><option>GPU</option></select></label>
+<label class="chk"><input id="es" type="checkbox" checked> Early stopping (patience 5)</label></div>
+</div>
+
+<h2 id="run">Run <span class="badge b-Idle" id="badge">Idle</span></h2>
+<div class="card">
+<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="pri" id="start">Start Experiment</button><button class="dng" id="stop" disabled>Stop Experiment</button><button id="reset">Reset Configuration</button></div>
+<div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i id="pb"></i></div>
+<div class="g4"><div class="m"><b id="ep">0 / 0</b><span>epoch (simulated)</span></div><div class="m"><b id="el">00:00</b><span>elapsed (simulated)</span></div><div class="m"><b id="tl">–</b><span>train loss (sim.)</span></div><div class="m"><b id="vl">–</b><span>val loss (sim.)</span></div></div>
+<div class="g2" style="margin-top:16px"><div><h3>Training vs validation loss <span class="tag ex">simulated</span></h3><div id="lossc"></div><div class="key"><span><i style="background:var(--B)"></i>train</span><span><i style="background:var(--C)"></i>validation</span></div></div>
+<div><h3>Validation PR-AUC <span class="tag ex">simulated</span></h3><div id="prc"></div></div></div>
+<div id="summ" class="note simn hide"></div>
+<p class="fine">Prototype mode — no Python process is launched. All curves come from a small JavaScript generator.</p></div>
+
+<h2 id="history">Experiment history</h2>
+<div class="card tw"><table id="hist"></table></div>
+<p class="fine">Test F1 / PR-AUC and checkpoints for EXP-001–003 are historical results from previous runs. Values marked <span class="sim">sim</span> (start time, duration) are invented for the mockup.</p>
+
+<h2 id="results">Results</h2>
+<div id="resnote" class="note hist"></div>
+<div class="g2"><div class="card"><h3>Test metrics</h3><div id="rbars"></div><h3 style="margin-top:18px">Confusion matrix (test)</h3><div id="rmx"></div></div>
+<div><div class="card"><h3>Configuration summary</h3><div id="cfgs"></div></div><div class="card" style="margin-top:16px"><h3>Checkpoint information</h3><div id="ckp"></div></div></div></div>
+
+<h2 id="judge">AI Experiment Analyst (LLM-as-a-Judge)</h2>
+<div class="note"><b>Demo mode — analysis is simulated; no LLM is connected.</b> Text is assembled in the browser from stored results. No data leaves this page.</div>
+<div class="g2" style="grid-template-columns:1.6fr 1fr">
+<div>
+<div class="card"><div class="g2" style="gap:12px">
+<label>Experiment<select id="jexp"></select></label>
+<label>Analysis focus<select id="jfocus"></select></label></div>
+<label class="chk"><input id="jcmp" type="checkbox"> Comparison mode (select two or more)</label>
+<div id="jchecks" class="hide" style="display:none;gap:14px;flex-wrap:wrap;margin-bottom:8px"></div>
+<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="pri" id="jgo">Analyze Experiment</button><button id="jcompare">Compare Experiments</button></div></div>
+<div id="jout" aria-live="polite"></div></div>
+<div class="card" style="align-self:start"><h3>Judge evaluation criteria <span class="tag ex">planned</span></h3><p class="fine">Planned criteria for a future LLM judge. No scores exist yet.</p>
+<ul class="crit"><li>Correctness of metric interpretation<em>planned</em></li><li>Consistency with recorded experiment results<em>planned</em></li><li>Quality and relevance of recommendations<em>planned</em></li><li>Awareness of class imbalance<em>planned</em></li><li>Awareness of patient-level generalization limits<em>planned</em></li><li>Avoidance of unsupported medical claims<em>planned</em></li></ul></div></div>
+<p class="fine" style="margin-top:40px">EEGNet experiment management · frontend prototype · research use only, not a clinically validated system</p>
+</div>
+
+<script>
+const $=i=>document.getElementById(i),pc=(v,n=2)=>(v*100).toFixed(n)+"%",f=n=>n.toLocaleString("en-US");
+// ---- Historical results (previous runs; stored values) ----
+const X=[
+{id:"EXP-001",k:"A",model:"EEGNet",strat:"Original",tr:17367,status:"Completed",start:"2026-10-02 09:14",dur:"41 min",ep:7,th:.996769,vp:.6153,vf:.6953,t:{accuracy:.9776,precision:.7785,recall:.5491,f1:.644,pr_auc:.7427,roc_auc:.9797},cm:[[5818,35],[101,123]],ck:"processed_data/models/eegnet_best.pth",hist:1},
+{id:"EXP-002",k:"B",model:"EEGNet",strat:"Undersampling 1:5",tr:4752,status:"Completed",start:"2026-10-09 14:02",dur:"18 min",ep:12,th:.995571,vp:.6243,vf:.7123,t:{accuracy:.9804,precision:.7933,recall:.6339,f1:.7047,pr_auc:.7443,roc_auc:.9844},cm:[[5816,37],[82,142]],ck:"processed_data/models/eegnet_undersampled_best.pth",hist:1},
+{id:"EXP-003",k:"C",model:"EEGNet",strat:"Balanced 1:1",tr:1584,status:"Completed",start:"2026-10-16 10:40",dur:"9 min",ep:16,th:.97505,vp:.6209,vf:.7192,t:{accuracy:.9803,precision:.7407,recall:.7143,f1:.7273,pr_auc:.7131,roc_auc:.9857},cm:[[5797,56],[64,160]],ck:"processed_data/models/eegnet_balanced_best.pth",hist:1}];
+const TR={A:17367,B:4752,C:1584},NM={A:"Original",B:"Undersampling 1:5",C:"Balanced 1:1"};
+const M=[["accuracy","Accuracy"],["precision","Precision"],["recall","Recall"],["f1","F1-score"],["pr_auc","PR-AUC"],["roc_auc","ROC-AUC"]];
+const fm=(k,v)=>k.endsWith("auc")?v.toFixed(4):pc(v);
+// ---- Config ----
+const FIELDS=["dataset","strategy","model","mch","mcl","msm","mdr","epochs","batch","lr","wd","opt","seed","loss","sched","ckm","thr","dev","es"];
+const DEF={};FIELDS.forEach(i=>{const e=$(i);DEF[i]=e.type==="checkbox"?e.checked:e.value});
+const cfg=()=>{const o={};FIELDS.forEach(i=>{const e=$(i);o[i]=e.type==="checkbox"?e.checked:e.value});return o};
+const upTrn=()=>$("trn").textContent="12 patients · "+f(TR[$("strategy").value])+" win.";
+$("strategy").onchange=upTrn;upTrn();
+// ---- Charts ----
+function line(el,series,o){const W=600,H=200,L=40,B=24,T=8,n=series[0].v.length,N=Math.max(n,o.n||n),px=i=>L+i/Math.max(N-1,1)*(W-L-10),py=v=>T+(o.max-v)/(o.max-o.min)*(H-B-T);
+let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.label}">`;
+for(let i=0;i<=4;i++){const v=o.min+(o.max-o.min)*i/4;s+=`<line x1="${L}" x2="${W-10}" y1="${py(v)}" y2="${py(v)}" stroke="#c9d3d1"/><text x="${L-5}" y="${py(v)+3}" text-anchor="end">${v.toFixed(2)}</text>`}
+s+=`<text x="${W/2}" y="${H-6}" text-anchor="middle">epoch</text>`;
+series.forEach(q=>{if(q.v.length)s+=`<polyline fill="none" stroke="${q.c}" stroke-width="2" points="${q.v.map((v,i)=>px(i)+","+py(v)).join(" ")}"/>`});el.innerHTML=s+"</svg>"}
+// ---- Simulation ----
+const rnd=(s,e)=>{const x=Math.sin(s*97.3+e*12.9898)*43758.5453;return x-Math.floor(x)-.5};
+const trL=(e,s)=>.62*Math.exp(-.17*e)+.07+rnd(s,e)*.012, vaL=(e,s)=>.66*Math.exp(-.13*e)+.12+rnd(s,e+50)*.03, vaP=(e,s)=>.34+.29*(1-Math.exp(-.28*e))+rnd(s,e+99)*.025;
+let sim={t:null,q:null,e:0,N:0,d:{tl:[],vl:[],vp:[]},n:0};
+function setStatus(s){const b=$("badge");b.textContent=s;b.className="badge b-"+s}
+function draw(){line($("lossc"),[{v:sim.d.tl,c:"#0f5c63"},{v:sim.d.vl,c:"#c27c0e"}],{min:0,max:.8,n:sim.N||30,label:"Simulated training and validation loss"});line($("prc"),[{v:sim.d.vp,c:"#0f5c63"}],{min:.3,max:.7,n:sim.N||30,label:"Simulated validation PR-AUC"})}
+const mmss=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+function clear(){clearTimeout(sim.q);clearInterval(sim.t);sim.t=sim.q=null}
+$("start").onclick=()=>{if(sim.t||sim.q)return;const c=cfg(),seed=+c.seed||1;sim.N=c.es?Math.min(+c.epochs,18):+c.epochs;sim.e=0;sim.d={tl:[],vl:[],vp:[]};$("summ").classList.add("hide");
+$("start").disabled=true;$("stop").disabled=false;setStatus("Queued");$("pb").style.width="0";$("ep").textContent="0 / "+sim.N;draw();
+sim.q=setTimeout(()=>{setStatus("Running");sim.t=setInterval(()=>{sim.e++;const e=sim.e;sim.d.tl.push(trL(e,seed));sim.d.vl.push(vaL(e,seed));sim.d.vp.push(vaP(e,seed));
+$("pb").style.width=e/sim.N*100+"%";$("ep").textContent=e+" / "+sim.N;$("el").textContent=mmss(e*18);$("tl").textContent=sim.d.tl[e-1].toFixed(3);$("vl").textContent=sim.d.vl[e-1].toFixed(3);draw();if(e>=sim.N)finish(c)},650)},1200)};
+$("stop").onclick=()=>{if(!sim.t&&!sim.q)return;clear();setStatus("Stopped");$("start").disabled=false;$("stop").disabled=true;$("summ").className="note";$("summ").innerHTML="<b>Simulated run stopped</b> at epoch "+sim.e+". No checkpoint was written."};
+$("reset").onclick=()=>{clear();FIELDS.forEach(i=>{const e=$(i);e.type==="checkbox"?e.checked=DEF[i]:e.value=DEF[i]});upTrn();sim.d={tl:[],vl:[],vp:[]};sim.N=0;draw();setStatus("Idle");$("pb").style.width="0";["ep","el","tl","vl"].forEach((i,j)=>$(i).textContent=["0 / 0","00:00","–","–"][j]);$("start").disabled=false;$("stop").disabled=true;$("summ").classList.add("hide")};
+function finish(c){clear();setStatus("Completed");$("start").disabled=false;$("stop").disabled=true;const d=sim.d.vp,be=d.indexOf(Math.max(...d))+1,b=X.find(x=>x.k===c.strategy),j=1+rnd(+c.seed,7)*.02;
+const t={};M.forEach(m=>t[m[0]]=Math.min(.999,b.t[m[0]]*j));const id="SIM-"+String(++sim.n).padStart(3,"0");
+X.push({id,k:c.strategy,model:c.model,strat:NM[c.strategy],tr:TR[c.strategy],status:"Completed",start:"just now",dur:mmss(sim.N*18),ep:be,th:b.th,vp:Math.max(...d),vf:b.vf,t,cm:b.cm.map(r=>r.map(v=>Math.round(v*j))),ck:"(not written — simulated)",sim:1});
+$("summ").className="note simn";$("summ").innerHTML=`<b>Simulated completion summary (${id})</b><br>Elapsed ${mmss(sim.N*18)} (simulated) · best epoch ${be} · best validation PR-AUC ${Math.max(...d).toFixed(4)} · simulated test F1 ${pc(t.f1)}. These numbers are generated for the mockup, not produced by a model.`;hist();fillJ();show(id)}
+// ---- History ----
+const SV=s=>`<span class="sim">sim</span>`;
+function hist(){$("hist").innerHTML=`<thead><tr><th>ID</th><th>Model</th><th>Data strategy</th><th>Status</th><th>Start</th><th>Duration</th><th>Best val PR-AUC</th><th>Test F1</th><th>Actions</th></tr></thead><tbody>${X.map(x=>`<tr><td>${x.id}${x.sim?' <span class="tag ex">simulated</span>':""}</td><td>${x.model}</td><td>${x.strat}</td><td><span class="badge b-${x.status}">${x.status}</span></td><td>${x.start}${x.hist?SV():""}</td><td>${x.dur}${x.hist?SV():""}</td><td>${x.vp.toFixed(4)}</td><td>${pc(x.t.f1)}</td><td><button onclick="show('${x.id}')">View details</button></td></tr>`).join("")}</tbody>`}
+// ---- Results ----
+function show(id,scroll){const x=X.find(v=>v.id===id),c=x.cm;
+$("resnote").className="note "+(x.sim?"simn":"hist");$("resnote").innerHTML=x.sim?`<b>Simulated output (${x.id}).</b> Generated by the mockup, not a real run.`:`<b>Historical result (${x.id}).</b> Stored values from a previous run, not generated by this interface.`;
+$("rbars").innerHTML=M.map(m=>`<div class="hb"><em>${m[1]}</em><div><i style="width:${x.t[m[0]]*100}%"></i></div><span>${fm(m[0],x.t[m[0]])}</span></div>`).join("");
+$("rmx").innerHTML=`<div class="mx"><span></span><span class="h">pred.<br>non-seiz.</span><span class="h">pred.<br>seizure</span><span class="r">actual non-seiz.</span><div class="c ok">${f(c[0][0])}<small>TN</small></div><div class="c bad">${c[0][1]}<small>FP</small></div><span class="r">actual seizure</span><div class="c bad">${c[1][0]}<small>FN</small></div><div class="c ok">${c[1][1]}<small>TP</small></div></div>`;
+const g=cfg(),r=(a,b)=>`<div class="ro"><span>${a}</span><span>${b}</span></div>`;
+$("cfgs").innerHTML=(x.sim?"":'<p class="fine">Shows the current form values, not this historical run\'s exact settings.</p>')+r("Model",g.model)+r("Data strategy",x.strat)+r("Epochs / batch",g.epochs+" / "+g.batch)+r("Optimizer · LR",g.opt+" · "+g.lr)+r("Loss",g.loss)+r("Scheduler",g.sched)+r("Device",g.dev)+r("Seed",g.seed);
+$("ckp").innerHTML=r("Best epoch",x.ep)+r("Selection metric","Validation PR-AUC")+r("Best val PR-AUC",x.vp.toFixed(4))+r("Threshold",x.th.toFixed(6))+`<p class="fine">${x.ck}</p>`;
+if(scroll)$("results").scrollIntoView({behavior:"smooth"})}
+window.show=id=>show(id,1);
+// ---- LLM judge (simulated). Replace analyze() with fetch("/api/analyze",...) later. ----
+const FOCUS={overall:"Overall performance",tradeoff:"Precision vs. recall trade-off",imbalance:"Class imbalance and data strategy",overfit:"Overfitting and generalization",cmx:"Confusion matrix interpretation",next:"Recommendations for the next experiment"};
+$("jfocus").innerHTML=Object.entries(FOCUS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
+function fillJ(){const v=$("jexp").value;$("jexp").innerHTML=X.map(x=>`<option value="${x.id}">${x.id} — ${x.strat}${x.sim?" (simulated)":""}</option>`).join("");if(v)$("jexp").value=v;
+$("jchecks").innerHTML=X.map(x=>`<label class="chk"><input type="checkbox" value="${x.id}" ${x.hist?"checked":""}> ${x.id} · ${x.strat}</label>`).join("")}
+function payload(){const ids=$("jcmp").checked?[...$("jchecks").querySelectorAll("input:checked")].map(i=>i.value):[$("jexp").value];return{experiments:ids.map(i=>X.find(x=>x.id===i)),focus:$("jfocus").value,config:cfg()}}
+$("jcmp").onchange=e=>{$("jchecks").style.display=e.target.checked?"flex":"none";$("jexp").disabled=e.target.checked};
+async function analyze(p){await new Promise(r=>setTimeout(r,1800));return build(p)} // <- swap for a real endpoint call
+function build(p){const E=p.experiments,all=X.filter(x=>x.hist),cmpSet=E.length>1?E:all,tp=x=>x.cm[1][1],fn=x=>x.cm[1][0],fp=x=>x.cm[0][1],lead=k=>cmpSet.reduce((a,b)=>b.t[k]>a.t[k]?b:a),lab=x=>x.strat;
+const one=E[0],o={};
+const focusNote={overall:"Focus: overall performance. F1 and the two AUCs matter more than accuracy here.",tradeoff:"Focus: precision vs. recall. Each run sits at a different point on the trade-off, set by training data and a validation-selected threshold.",imbalance:"Focus: class imbalance. Seizure windows are 3.7% of the test set, so accuracy alone is uninformative.",overfit:"Focus: generalization. Validation and test come from different, unseen patients, so the gap between them is informative but based on few patients.",cmx:"Focus: confusion matrix. Missed seizures (FN) and false alarms (FP) have different costs.",next:"Focus: next experiment. Recommendations below are listed in suggested priority."}[p.focus];
+o.focus=focusNote;
+o.summary=E.length>1?`Across ${E.map(lab).join(", ")}: ${lab(lead("f1"))} has the highest test F1 (${pc(lead("f1").t.f1)}) and ${lab(lead("recall"))} the highest recall (${pc(lead("recall").t.recall)}), while ${lab(lead("precision"))} has the highest precision (${pc(lead("precision").t.precision)}). No single run is best on every metric.`:`${lab(one)} reaches test F1 ${pc(one.t.f1)} with precision ${pc(one.t.precision)} and recall ${pc(one.t.recall)}. It catches ${tp(one)} of 224 seizure windows, misses ${fn(one)} and raises ${fp(one)} false alarms.`;
+o.strengths=E.map(x=>`${lab(x)}: ROC-AUC ${x.t.roc_auc.toFixed(4)} shows strong ranking of seizure above non-seizure windows; precision ${pc(x.t.precision)} means most alarms are real.`);
+o.weaknesses=E.map(x=>`${lab(x)}: ${fn(x)} seizure windows missed (recall ${pc(x.t.recall)}); validation F1 ${pc(x.vf)} vs test F1 ${pc(x.t.f1)} (${x.t.f1-x.vf>=0?"+":""}${((x.t.f1-x.vf)*100).toFixed(1)} pts), with only 3 test patients.`);
+o.metrics=["Accuracy: misleading here; always predicting non-seizure would score 96.3%.","Precision: of windows flagged as seizure, how many truly are. Low precision means more false alarms.","Recall: of real seizure windows, how many were found. Low recall means missed events.","F1-score: balances precision and recall at one chosen threshold.","PR-AUC: precision/recall trade-off across thresholds; most informative under imbalance.","ROC-AUC: ranking quality across thresholds; can look optimistic when negatives dominate."];
+o.errors=[`False negatives are missed seizure windows, usually the costlier error in detection. Recorded FN: ${E.map(x=>x.id+" "+fn(x)).join(", ")}.`,`False positives are false alarms that erode trust and burden review. Recorded FP: ${E.map(x=>x.id+" "+fp(x)).join(", ")}.`];
+const cm=[];[["f1","F1-score"],["recall","recall"],["precision","precision"],["pr_auc","PR-AUC"],["roc_auc","ROC-AUC"]].forEach(([k,n])=>{const l=lead(k);cm.push(`Highest ${n}: ${lab(l)} (${fm(k,l.t[k])}).`)});
+const hr=lead("recall"),hp=lead("precision");if(hr!==hp)cm.push(`${lab(hr)} detects ${tp(hr)-tp(hp)} more seizure windows than ${lab(hp)} but also produces ${fp(hr)-fp(hp)} more false positives.`);
+cm.push("No strategy should be declared universally best from these results alone.");if(E.length===1)cm.unshift(`Compared against all historical runs: ${all.map(x=>x.id+" F1 "+pc(x.t.f1)).join(" · ")}.`);o.comparison=cm;
+o.recs=["Evaluate intermediate undersampling ratios (e.g. 1:2, 1:3) between 1:1 and 1:5.","Adjust the classification threshold using validation data only, then report test once.","Repeat with several random seeds, since undersampling and training are stochastic.","Investigate generalization across patients (e.g. leave-patient-out cross-validation).","Report per-patient metrics to see whether results depend on one patient."];
+o.limits=["Evaluation uses 3 unseen test patients, so generalization claims are limited.","Windows overlap by 50%, so neighbouring windows are correlated.","Results are research findings and do not establish clinical readiness."];return o}
+const sec=(t,items,li=1)=>`<div class="bub"><h4>${t}</h4>${li?"<ul>"+items.map(i=>`<li>${i}</li>`).join("")+"</ul>":`<p style="margin:0">${items}</p>`}</div>`;
+async function run(){const p=payload();if(!p.experiments.length){$("jout").innerHTML='<div class="note">Select at least one experiment.</div>';return}
+if($("jcmp").checked&&p.experiments.length<2){$("jout").innerHTML='<div class="note">Comparison mode needs two or more experiments.</div>';return}
+$("jout").innerHTML='<div class="bub"><div class="dots"><span></span><span></span><span></span></div> Analyzing experiment... <span class="fine">(simulated)</span></div>';$("jgo").disabled=$("jcompare").disabled=true;
+const o=await analyze(p);$("jgo").disabled=$("jcompare").disabled=false;
+$("jout").innerHTML=`<div class="note"><span class="tag ex">simulated</span> AI Experiment Analyst · ${p.experiments.map(x=>x.id).join(" vs ")} · ${FOCUS[p.focus]}</div><div class="bub"><h4>Focus</h4><p style="margin:0">${o.focus}</p></div>`+sec("1 · Executive summary",o.summary,0)+sec("2 · Strengths",o.strengths)+sec("3 · Weaknesses",o.weaknesses)+sec("4 · Metric interpretation",o.metrics)+sec("5 · False negatives and false positives",o.errors)+sec("6 · Comparison with other experiments",o.comparison)+sec("7 · Recommendations",o.recs)+sec("8 · Reliability and limitations",o.limits)+'<p class="fine">Demo mode — analysis is simulated; no LLM is connected.</p>'}
+$("jgo").onclick=run;$("jcompare").onclick=()=>{$("jcmp").checked=true;$("jcmp").onchange({target:$("jcmp")});run()};
+fillJ();hist();draw();show("EXP-003");
+</script></body></html>
