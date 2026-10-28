@@ -36,10 +36,14 @@ button.pri{background:var(--B);color:#fff;border-color:var(--B)}button.dng{color
 [title]{cursor:help}.hide{display:none}
 @media(max-width:860px){.g2,.g3{grid-template-columns:1fr}.g4{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){.dots span{animation:none}.prog i{transition:none}}
+.mc{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}.mc label{border:1px solid var(--rule);padding:10px;margin:0;cursor:pointer;background:#fff;font-weight:400;font-size:.82rem}.mc label:has(input:checked){border-color:var(--B);background:var(--okbg)}.mc b{display:block;font-size:.9rem}.mc input{width:auto;margin-right:6px}
+.pl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font:.78rem var(--mono)}.pl span{border:1px solid var(--ink);padding:6px 10px;background:#fff}.pl span.s{background:var(--okbg)}.err{color:var(--sz)}.wr{color:#8a5a08}
+.lab2{display:grid;grid-template-columns:1fr 1.1fr;gap:16px;align-items:start}details.card summary{cursor:pointer;font-weight:700}
+@media(max-width:860px){.mc{grid-template-columns:1fr 1fr}.lab2{grid-template-columns:1fr}}
 </style></head><body>
 <div class="bar">Prototype mode — experiment execution and progress are simulated.</div>
 <div class="wrap">
-<nav><a href="index.html" style="display:inline-block;padding:10px 18px;background:#fff;color:#16212b;font:700 .85rem ui-monospace,Menlo,Consolas,monospace;text-decoration:none;border:1px solid #16212b;">← Dashboard</a><a href="#config" class="on">Configuration</a><a href="#run">Run</a><a href="#history">History</a><a href="#results">Results</a><a href="#judge">AI Analyst</a></nav>
+<nav><a href="index.html" style="display:inline-block;padding:10px 18px;background:#fff;color:#16212b;font:700 .85rem ui-monospace,Menlo,Consolas,monospace;text-decoration:none;border:1px solid #16212b;">← Dashboard</a><a href="#config" class="on">Configuration</a><a href="#lab">Data strategy</a><a href="#run">Run</a><a href="#history">History</a><a href="#results">Results</a><a href="#judge">AI Analyst</a></nav>
 <h1>Experiment management</h1>
 <p class="sub">Configure, launch and compare EEGNet seizure-detection experiments. Nothing here trains a model, runs a script or modifies a file.</p>
 
@@ -48,7 +52,7 @@ button.pri{background:var(--B);color:#fff;border-color:var(--B)}button.dng{color
 <div class="g3">
 <div class="card"><h3>Dataset &amp; preprocessing</h3>
 <label>Dataset<select id="dataset"><option>EEG seizure corpus (19-channel, patient-level split)</option></select></label>
-<label>Data strategy<span>How the training set is balanced. Validation and test stay unchanged.</span><select id="strategy"><option value="A">Original imbalanced dataset</option><option value="B">Undersampling 1:5</option><option value="C">Balanced undersampling 1:1</option></select></label>
+<p class="fine" style="margin:12px 0 0">Data strategy: configured in the <a href="#lab">Data Strategy Lab</a> below. Validation and test sets are never resampled.</p>
 <div class="ro" style="margin-top:10px"><span>Train</span><span id="trn"></span></div><div class="ro"><span>Validation</span><span>4 patients · 5,550 win.</span></div><div class="ro"><span>Test</span><span>3 patients · 6,077 win.</span></div>
 <div class="ro"><span title="Samples per second per channel">Sampling frequency</span><span>256 Hz</span></div><div class="ro"><span>Window duration</span><span>2 s (512 samples)</span></div><div class="ro"><span>EEG channels</span><span>19</span></div><div class="ro"><span title="Frequencies outside this band are attenuated">Bandpass filter</span><span>0.5–40 Hz</span></div><div class="ro"><span title="Consecutive windows share half their samples">Window overlap</span><span>50%</span></div></div>
 
@@ -76,10 +80,58 @@ button.pri{background:var(--B);color:#fff;border-color:var(--B)}button.dng{color
 <label class="chk"><input id="es" type="checkbox" checked> Early stopping (patience 5)</label></div>
 </div>
 
+<h2 id="lab">Data Strategy Lab <span class="tag ex">prototype</span></h2>
+<p class="sub">Define how the <b>training set</b> is prepared. Everything is calculated locally in your browser. Validation and test sets are never resampled and no dataset is modified.</p>
+<div id="labroot">
+<div class="card"><h3>Configure Data Strategy · base dataset <span class="tag">current dataset statistics</span></h3>
+<div class="g4"><div class="m"><b>792</b><span>positive (seizure)</span></div><div class="m"><b>16,575</b><span>negative (non-seizure)</span></div><div class="m"><b>17,367</b><span>total training windows</span></div><div class="m"><b>4.56%</b><span>positive · seed <span id="bseed">42</span></span></div></div>
+<p class="fine">EEG seizure corpus, 12 training patients. These are recorded counts; the panel on the right shows recalculated <i>estimates</i>.</p></div>
+<div class="mc"><label><input type="radio" name="meth" value="none"><b>No sampling</b>Keep all samples; the original class distribution is preserved.</label>
+<label><input type="radio" name="meth" value="under" checked><b>Random undersampling</b>Randomly drop negative windows.</label>
+<label><input type="radio" name="meth" value="over"><b>Random oversampling <span class="tag ex">prototype-only</span></b>Resample positive windows.</label>
+<label><input type="radio" name="meth" value="comb"><b>Combined <span class="tag ex">prototype-only</span></b>Undersampling plus oversampling, in a chosen order.</label></div>
+<div class="lab2"><div>
+<div class="card" id="uf" style="margin-bottom:14px"><h3>Random undersampling</h3><div class="g2" style="gap:10px">
+<label>Sampling ratio mode<select id="umode"><option value="ratio">Negative-to-positive ratio</option><option value="pct">Target positive-class percentage</option><option value="count">Custom number of negatives</option></select></label>
+<label><b id="ulab"></b><input id="uval" type="number" min="0" step="any" value="3"></label>
+<label>Random seed<input id="useed" type="number" value="42"></label>
+<label>Maximum negative samples<span>optional cap</span><input id="umax" type="number" min="1" placeholder="none"></label></div>
+<label class="chk"><input id="ukeep" type="checkbox" checked> Keep all positive samples</label>
+<label>Positive samples to keep<span>used only when not keeping all</span><input id="upos" type="number" min="1" value="792"></label>
+<label class="chk"><input id="urepl" type="checkbox" disabled> Sampling with replacement <span class="tag ex">off</span></label>
+<p class="fine">Standard undersampling picks from existing negatives without replacement, so it cannot request more negatives than exist.</p>
+<label class="chk"><input id="ushuf" type="checkbox" checked> Shuffle resulting dataset</label></div>
+<div class="card" id="of" style="margin-bottom:14px"><h3>Random oversampling <span class="tag ex">prototype-only</span></h3><div class="g2" style="gap:10px">
+<label>Target mode<select id="omode"><option value="pct">Target positive-class percentage</option><option value="ratio">Target negative-to-positive ratio</option></select></label>
+<label><b id="olab"></b><input id="oval" type="number" min="0" step="any" value="25"></label>
+<label>Random seed<input id="oseed" type="number" value="42"></label>
+<label>Maximum generated samples<span>optional cap</span><input id="omax" type="number" min="1" placeholder="none"></label></div>
+<label class="chk"><input id="orepl" type="checkbox" checked> Sampling with replacement</label>
+<label class="chk"><input id="oshuf" type="checkbox" checked> Shuffle resulting dataset</label>
+<p class="fine">Oversampling resamples existing seizure windows and may duplicate them. Simulated only; not implemented in the real training pipeline yet.</p></div>
+<div class="card" style="margin-bottom:14px"><h3>Loss weighting</h3>
+<label>Class weighting<select id="wmode"><option value="none">No class weighting</option><option value="auto" selected>Automatically calculate class weights</option><option value="manual">Manually configure (planned)</option></select></label>
+<div class="g2" style="gap:10px"><label>Negative-class weight<input id="wneg" type="number" min="0" step="any" value="1"></label><label>Positive-class weight<input id="wpos" type="number" min="0" step="any" value="1"></label></div>
+<p class="fine">Weighting changes each class's contribution to the loss; sampling changes which examples are trained on.</p><p class="fine wr" id="wwarn"></p></div>
+<details class="card"><summary>Advanced data options</summary>
+<div class="g2" style="gap:10px"><label>Global random seed<input id="gseed" type="number" min="0" value="42"></label><label>Sampling order (combined)<select id="order"><option value="uo">Undersample, then oversample</option><option value="ou">Oversample, then undersample</option></select></label></div>
+<label class="chk"><input id="shb" type="checkbox"> Shuffle before sampling</label><label class="chk"><input id="sha" type="checkbox" checked> Shuffle after sampling</label>
+<p class="fine">Not exposed on purpose: anything that could alter validation/test sets or mix patients between splits. Size and memory estimates appear in the summary.</p></details>
+</div><div>
+<div class="card" style="margin-bottom:14px"><h3>Live strategy summary <span class="tag ex">estimate</span></h3><div id="lerr" class="err"></div><div id="sumb"></div><p id="expl" style="margin:12px 0 0"></p><div id="lwarn" class="fine wr"></div></div>
+<div class="card"><h3>Before vs. after</h3><div class="g2" id="dn" style="gap:8px"></div><div class="key"><span><i style="background:var(--sz)"></i>seizure</span><span><i style="background:var(--A)"></i>non-seizure</span></div>
+<h3 style="margin-top:16px">Sample counts</h3><div id="bars"></div><div class="key"><span><i style="background:#b9c4c9"></i>before</span><span><i style="background:var(--B)"></i>after</span></div>
+<h3 style="margin-top:16px">Dataset reduction / expansion</h3><div class="prog"><i id="redb"></i></div><div class="fine" id="redt"></div>
+<h3 style="margin-top:16px">Strategy pipeline</h3><div class="pl" id="pipe"></div></div></div></div>
+<div class="card" style="margin-top:16px"><h3>Save, load and preview <span class="tag ex">custom configuration</span></h3>
+<div class="g2" style="gap:10px;grid-template-columns:2fr 2fr"><label>Strategy name<input id="sname" placeholder="e.g. Undersampling ratio 1:3"></label><label>Saved strategies<select id="ssel"></select></label></div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0"><button class="pri" id="ssave">Save Strategy</button><button id="sload">Load Strategy</button><button id="sreset">Reset Strategy</button><button id="sprev">Preview Configuration</button></div><div id="smsg" class="fine"></div>
+<div class="tw"><table id="stbl"></table></div><pre id="prev" class="fine hide" style="background:var(--paper);padding:12px;overflow:auto"></pre>
+<p class="fine">Saved in this browser's local storage only. Nothing is written to Python files or datasets.</p></div></div>
 <h2 id="run">Run <span class="badge b-Idle" id="badge">Idle</span></h2>
 <div class="card">
 <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="pri" id="start">Start Experiment</button><button class="dng" id="stop" disabled>Stop Experiment</button><button id="reset">Reset Configuration</button></div>
-<div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i id="pb"></i></div>
+<div id="esum" class="note simn hide"></div><div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i id="pb"></i></div>
 <div class="g4"><div class="m"><b id="ep">0 / 0</b><span>epoch (simulated)</span></div><div class="m"><b id="el">00:00</b><span>elapsed (simulated)</span></div><div class="m"><b id="tl">–</b><span>train loss (sim.)</span></div><div class="m"><b id="vl">–</b><span>val loss (sim.)</span></div></div>
 <div class="g2" style="margin-top:16px"><div><h3>Training vs validation loss <span class="tag ex">simulated</span></h3><div id="lossc"></div><div class="key"><span><i style="background:var(--B)"></i>train</span><span><i style="background:var(--C)"></i>validation</span></div></div>
 <div><h3>Validation PR-AUC <span class="tag ex">simulated</span></h3><div id="prc"></div></div></div>
@@ -122,11 +174,10 @@ const TR={A:17367,B:4752,C:1584},NM={A:"Original",B:"Undersampling 1:5",C:"Balan
 const M=[["accuracy","Accuracy"],["precision","Precision"],["recall","Recall"],["f1","F1-score"],["pr_auc","PR-AUC"],["roc_auc","ROC-AUC"]];
 const fm=(k,v)=>k.endsWith("auc")?v.toFixed(4):pc(v);
 // ---- Config ----
-const FIELDS=["dataset","strategy","model","mch","mcl","msm","mdr","epochs","batch","lr","wd","opt","seed","loss","sched","ckm","thr","dev","es"];
+const FIELDS=["dataset","model","mch","mcl","msm","mdr","epochs","batch","lr","wd","opt","seed","loss","sched","ckm","thr","dev","es"];
 const DEF={};FIELDS.forEach(i=>{const e=$(i);DEF[i]=e.type==="checkbox"?e.checked:e.value});
 const cfg=()=>{const o={};FIELDS.forEach(i=>{const e=$(i);o[i]=e.type==="checkbox"?e.checked:e.value});return o};
-const upTrn=()=>$("trn").textContent="12 patients · "+f(TR[$("strategy").value])+" win.";
-$("strategy").onchange=upTrn;upTrn();
+
 // ---- Charts ----
 function line(el,series,o){const W=600,H=200,L=40,B=24,T=8,n=series[0].v.length,N=Math.max(n,o.n||n),px=i=>L+i/Math.max(N-1,1)*(W-L-10),py=v=>T+(o.max-v)/(o.max-o.min)*(H-B-T);
 let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.label}">`;
@@ -141,29 +192,29 @@ function setStatus(s){const b=$("badge");b.textContent=s;b.className="badge b-"+
 function draw(){line($("lossc"),[{v:sim.d.tl,c:"#0f5c63"},{v:sim.d.vl,c:"#c27c0e"}],{min:0,max:.8,n:sim.N||30,label:"Simulated training and validation loss"});line($("prc"),[{v:sim.d.vp,c:"#0f5c63"}],{min:.3,max:.7,n:sim.N||30,label:"Simulated validation PR-AUC"})}
 const mmss=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 function clear(){clearTimeout(sim.q);clearInterval(sim.t);sim.t=sim.q=null}
-$("start").onclick=()=>{if(sim.t||sim.q)return;const c=cfg(),seed=+c.seed||1;sim.N=c.es?Math.min(+c.epochs,18):+c.epochs;sim.e=0;sim.d={tl:[],vl:[],vp:[]};$("summ").classList.add("hide");
+$("start").onclick=()=>{if(sim.t||sim.q)return;const c=cfg(),seed=+c.seed||1,L=calc();if(L.errors.length){$("summ").className="note";$("summ").innerHTML="<b>Fix the data strategy first:</b> "+L.errors.join(" ");return}sim.snap={name:stratName(L),c:L,w:wlabel(L),st:getLab()};showRun();sim.N=c.es?Math.min(+c.epochs,18):+c.epochs;sim.e=0;sim.d={tl:[],vl:[],vp:[]};$("summ").classList.add("hide");
 $("start").disabled=true;$("stop").disabled=false;setStatus("Queued");$("pb").style.width="0";$("ep").textContent="0 / "+sim.N;draw();
 sim.q=setTimeout(()=>{setStatus("Running");sim.t=setInterval(()=>{sim.e++;const e=sim.e;sim.d.tl.push(trL(e,seed));sim.d.vl.push(vaL(e,seed));sim.d.vp.push(vaP(e,seed));
 $("pb").style.width=e/sim.N*100+"%";$("ep").textContent=e+" / "+sim.N;$("el").textContent=mmss(e*18);$("tl").textContent=sim.d.tl[e-1].toFixed(3);$("vl").textContent=sim.d.vl[e-1].toFixed(3);draw();if(e>=sim.N)finish(c)},650)},1200)};
 $("stop").onclick=()=>{if(!sim.t&&!sim.q)return;clear();setStatus("Stopped");$("start").disabled=false;$("stop").disabled=true;$("summ").className="note";$("summ").innerHTML="<b>Simulated run stopped</b> at epoch "+sim.e+". No checkpoint was written."};
-$("reset").onclick=()=>{clear();FIELDS.forEach(i=>{const e=$(i);e.type==="checkbox"?e.checked=DEF[i]:e.value=DEF[i]});upTrn();sim.d={tl:[],vl:[],vp:[]};sim.N=0;draw();setStatus("Idle");$("pb").style.width="0";["ep","el","tl","vl"].forEach((i,j)=>$(i).textContent=["0 / 0","00:00","–","–"][j]);$("start").disabled=false;$("stop").disabled=true;$("summ").classList.add("hide")};
-function finish(c){clear();setStatus("Completed");$("start").disabled=false;$("stop").disabled=true;const d=sim.d.vp,be=d.indexOf(Math.max(...d))+1,b=X.find(x=>x.k===c.strategy),j=1+rnd(+c.seed,7)*.02;
+$("reset").onclick=()=>{clear();FIELDS.forEach(i=>{const e=$(i);e.type==="checkbox"?e.checked=DEF[i]:e.value=DEF[i]});setLab(DEFL);refresh();sim.d={tl:[],vl:[],vp:[]};sim.N=0;draw();setStatus("Idle");$("pb").style.width="0";["ep","el","tl","vl"].forEach((i,j)=>$(i).textContent=["0 / 0","00:00","–","–"][j]);$("start").disabled=false;$("stop").disabled=true;$("summ").classList.add("hide")};
+function finish(c){clear();setStatus("Completed");$("start").disabled=false;$("stop").disabled=true;const d=sim.d.vp,be=d.indexOf(Math.max(...d))+1,L=sim.snap,b=X.find(x=>x.k===nearest(L.c.pos/L.c.total)),j=1+rnd(+c.seed,7)*.02;
 const t={};M.forEach(m=>t[m[0]]=Math.min(.999,b.t[m[0]]*j));const id="SIM-"+String(++sim.n).padStart(3,"0");
-X.push({id,k:c.strategy,model:c.model,strat:NM[c.strategy],tr:TR[c.strategy],status:"Completed",start:"just now",dur:mmss(sim.N*18),ep:be,th:b.th,vp:Math.max(...d),vf:b.vf,t,cm:b.cm.map(r=>r.map(v=>Math.round(v*j))),ck:"(not written — simulated)",sim:1});
-$("summ").className="note simn";$("summ").innerHTML=`<b>Simulated completion summary (${id})</b><br>Elapsed ${mmss(sim.N*18)} (simulated) · best epoch ${be} · best validation PR-AUC ${Math.max(...d).toFixed(4)} · simulated test F1 ${pc(t.f1)}. These numbers are generated for the mockup, not produced by a model.`;hist();fillJ();show(id)}
+X.push({id,k:b.k,model:c.model,strat:L.name,tr:L.c.total,snap:L,status:"Completed",start:"just now",dur:mmss(sim.N*18),ep:be,th:b.th,vp:Math.max(...d),vf:b.vf,t,cm:b.cm.map(r=>r.map(v=>Math.round(v*j))),ck:"(not written — simulated)",sim:1});
+$("summ").className="note simn";$("summ").innerHTML=`<b>Simulated completion summary (${id})</b><br>Elapsed ${mmss(sim.N*18)} (simulated) · best epoch ${be} · best validation PR-AUC ${Math.max(...d).toFixed(4)} · simulated test F1 ${pc(t.f1)}. These numbers are generated for the mockup, not produced by a model.`;hist();fillJ();showRes(id)}
 // ---- History ----
 const SV=s=>`<span class="sim">sim</span>`;
-function hist(){$("hist").innerHTML=`<thead><tr><th>ID</th><th>Model</th><th>Data strategy</th><th>Status</th><th>Start</th><th>Duration</th><th>Best val PR-AUC</th><th>Test F1</th><th>Actions</th></tr></thead><tbody>${X.map(x=>`<tr><td>${x.id}${x.sim?' <span class="tag ex">simulated</span>':""}</td><td>${x.model}</td><td>${x.strat}</td><td><span class="badge b-${x.status}">${x.status}</span></td><td>${x.start}${x.hist?SV():""}</td><td>${x.dur}${x.hist?SV():""}</td><td>${x.vp.toFixed(4)}</td><td>${pc(x.t.f1)}</td><td><button onclick="show('${x.id}')">View details</button></td></tr>`).join("")}</tbody>`}
+function hist(){$("hist").innerHTML=`<thead><tr><th>ID</th><th>Model</th><th>Data strategy</th><th>Status</th><th>Start</th><th>Duration</th><th>Best val PR-AUC</th><th>Test F1</th><th>Actions</th></tr></thead><tbody>${X.map(x=>`<tr><td>${x.id} <span class="tag ${x.sim?"ex":""}">${x.sim?"simulated":"historical"}</span></td><td>${x.model}</td><td>${x.strat}</td><td><span class="badge b-${x.status}">${x.status}</span></td><td>${x.start}${x.hist?SV():""}</td><td>${x.dur}${x.hist?SV():""}</td><td>${x.vp.toFixed(4)}</td><td>${pc(x.t.f1)}</td><td><button onclick="show('${x.id}')">View details</button></td></tr>`).join("")}</tbody>`}
 // ---- Results ----
-function show(id,scroll){const x=X.find(v=>v.id===id),c=x.cm;
+function showRes(id,scroll){const x=X.find(v=>v.id===id),c=x.cm;
 $("resnote").className="note "+(x.sim?"simn":"hist");$("resnote").innerHTML=x.sim?`<b>Simulated output (${x.id}).</b> Generated by the mockup, not a real run.`:`<b>Historical result (${x.id}).</b> Stored values from a previous run, not generated by this interface.`;
 $("rbars").innerHTML=M.map(m=>`<div class="hb"><em>${m[1]}</em><div><i style="width:${x.t[m[0]]*100}%"></i></div><span>${fm(m[0],x.t[m[0]])}</span></div>`).join("");
 $("rmx").innerHTML=`<div class="mx"><span></span><span class="h">pred.<br>non-seiz.</span><span class="h">pred.<br>seizure</span><span class="r">actual non-seiz.</span><div class="c ok">${f(c[0][0])}<small>TN</small></div><div class="c bad">${c[0][1]}<small>FP</small></div><span class="r">actual seizure</span><div class="c bad">${c[1][0]}<small>FN</small></div><div class="c ok">${c[1][1]}<small>TP</small></div></div>`;
 const g=cfg(),r=(a,b)=>`<div class="ro"><span>${a}</span><span>${b}</span></div>`;
-$("cfgs").innerHTML=(x.sim?"":'<p class="fine">Shows the current form values, not this historical run\'s exact settings.</p>')+r("Model",g.model)+r("Data strategy",x.strat)+r("Epochs / batch",g.epochs+" / "+g.batch)+r("Optimizer · LR",g.opt+" · "+g.lr)+r("Loss",g.loss)+r("Scheduler",g.sched)+r("Device",g.dev)+r("Seed",g.seed);
+$("cfgs").innerHTML=(x.sim?"":'<p class="fine">Shows the current form values, not this historical run\'s exact settings.</p>')+r("Model",g.model)+r("Data strategy",x.strat)+(x.snap?r("Train windows (est.)",f(x.snap.c.total))+r("Positive share",pp(x.snap.c.pos/x.snap.c.total))+r("Loss weighting",x.snap.w):"")+r("Epochs / batch",g.epochs+" / "+g.batch)+r("Optimizer · LR",g.opt+" · "+g.lr)+r("Loss",g.loss)+r("Scheduler",g.sched)+r("Device",g.dev)+r("Seed",g.seed);
 $("ckp").innerHTML=r("Best epoch",x.ep)+r("Selection metric","Validation PR-AUC")+r("Best val PR-AUC",x.vp.toFixed(4))+r("Threshold",x.th.toFixed(6))+`<p class="fine">${x.ck}</p>`;
 if(scroll)$("results").scrollIntoView({behavior:"smooth"})}
-window.show=id=>show(id,1);
+window.show=id=>showRes(id,1);
 // ---- LLM judge (simulated). Replace analyze() with fetch("/api/analyze",...) later. ----
 const FOCUS={overall:"Overall performance",tradeoff:"Precision vs. recall trade-off",imbalance:"Class imbalance and data strategy",overfit:"Overfitting and generalization",cmx:"Confusion matrix interpretation",next:"Recommendations for the next experiment"};
 $("jfocus").innerHTML=Object.entries(FOCUS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
@@ -193,5 +244,72 @@ $("jout").innerHTML='<div class="bub"><div class="dots"><span></span><span></spa
 const o=await analyze(p);$("jgo").disabled=$("jcompare").disabled=false;
 $("jout").innerHTML=`<div class="note"><span class="tag ex">simulated</span> AI Experiment Analyst · ${p.experiments.map(x=>x.id).join(" vs ")} · ${FOCUS[p.focus]}</div><div class="bub"><h4>Focus</h4><p style="margin:0">${o.focus}</p></div>`+sec("1 · Executive summary",o.summary,0)+sec("2 · Strengths",o.strengths)+sec("3 · Weaknesses",o.weaknesses)+sec("4 · Metric interpretation",o.metrics)+sec("5 · False negatives and false positives",o.errors)+sec("6 · Comparison with other experiments",o.comparison)+sec("7 · Recommendations",o.recs)+sec("8 · Reliability and limitations",o.limits)+'<p class="fine">Demo mode — analysis is simulated; no LLM is connected.</p>'}
 $("jgo").onclick=run;$("jcompare").onclick=()=>{$("jcmp").checked=true;$("jcmp").onchange({target:$("jcmp")});run()};
-fillJ();hist();draw();show("EXP-003");
+/* ---- Data Strategy Lab (frontend-only; all numbers are local estimates) ---- */
+const P0=792,N0=16575,T0=P0+N0,WIN_B=19*512*4;
+const LAB=["umode","uval","ukeep","upos","useed","umax","ushuf","omode","oval","orepl","omax","oseed","oshuf","wmode","wneg","wpos","gseed","order","shb","sha","sname"];
+const $n=id=>parseFloat($(id).value),pp=v=>(v*100).toFixed(2).replace(/\.?0+$/,"")+"%",esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const meth=()=>document.querySelector("input[name=meth]:checked").value,ML={none:"No sampling",under:"Random undersampling",over:"Random oversampling (prototype-only)",comb:"Combined sampling (prototype-only)"};
+function getLab(){const o={meth:meth()};LAB.forEach(i=>{const e=$(i);o[i]=e.type==="checkbox"?e.checked:e.value});return o}
+function setLab(o){document.querySelector(`input[name=meth][value=${o.meth}]`).checked=true;LAB.forEach(i=>{if(i in o){const e=$(i);e.type==="checkbox"?e.checked=o[i]:e.value=o[i]}})}
+const DEFL=getLab();
+function calc(){const m=meth(),E=[],Wn=[],desc=[],steps=[];let P=P0,N=N0,dup=0;
+const sd=i=>{const v=$n(i);if(!Number.isInteger(v)||v<0)E.push("Random seed must be a non-negative integer.")};sd("gseed");
+const U=()=>{sd("useed");let p=P;if(!$("ukeep").checked){const k=$n("upos");if(!(k>=1&&k<=P)){E.push(`Positives to keep must be between 1 and ${f(P)}.`);return}p=Math.floor(k)}
+const md=$("umode").value,v=$n("uval");if(!(v>0)){E.push("Undersampling value must be greater than 0.");return}let n;
+if(md==="ratio")n=Math.round(p*v);else if(md==="pct"){if(v>=100){E.push("Target positive percentage must be below 100.");return}n=Math.round(p*(100-v)/v)}else n=Math.round(v);
+const mx=$n("umax");if(mx>0)n=Math.min(n,Math.round(mx));
+if(n>N){E.push(`Undersampling asks for ${f(n)} negative windows but only ${f(N)} are available (no replacement).`);return}
+if(n<1){E.push("Undersampling would leave no negative windows.");return}
+steps.push("Random undersampling");desc.push(`random undersampling retains ${$("ukeep").checked?"all ":""}${f(p)} positive windows and selects ${mx>0&&n===Math.round(mx)?"up to ":""}${f(n)} negative windows`);P=p;N=n};
+const O=()=>{sd("oseed");const v=$n("oval");if(!(v>0)){E.push("Oversampling value must be greater than 0.");return}let t;
+if($("omode").value==="pct"){if(v>=100){E.push("Target positive percentage must be below 100.");return}t=Math.round(N*v/(100-v))}else t=Math.round(N/v);
+if(t<P){E.push(`Oversampling target (${f(t)} positives) is below the current ${f(P)}; it can only add samples.`);return}
+let g=t-P;const mx=$n("omax");if(mx>0)g=Math.min(g,Math.round(mx));
+if(g>P&&!$("orepl").checked){E.push("Generating more positives than exist requires sampling with replacement.");return}
+steps.push("Random oversampling");desc.push(`random oversampling adds ${f(g)} resampled positive windows${$("orepl").checked?" (with replacement)":""}`);P+=g;dup+=g};
+const seq=m==="comb"?($("order").value==="uo"?[U,O]:[O,U]):m==="under"?[U]:m==="over"?[O]:[];
+for(const st of seq){st();if(E.length)break}
+if(m==="comb"&&$("order").value==="ou")Wn.push("Oversampling first duplicates positives before negatives are reduced; the last step sets the final class ratio.");
+const wm=$("wmode").value,T=P+N;let wn=1,wp=1;
+if(wm==="auto"){wn=T/(2*N);wp=T/(2*P)}else if(wm==="manual"){wn=$n("wneg");wp=$n("wpos");if(!(wn>0&&wp>0))E.push("Class weights must be positive numbers.");Wn.push("Manual class weights are a planned feature, not supported by the current training scripts.")}
+if(m==="over"||m==="comb")Wn.push("Oversampling and combined sampling are prototype-only and not implemented in the real pipeline.");
+if(dup>0)Wn.push(`Oversampling duplicates ${f(dup)} seizure windows; the model may memorize repeated examples.`);
+if(wm!=="none"&&m!=="none")Wn.push("Sampling and class weighting are both enabled; their effects may compound.");
+return{m,pos:P,neg:N,total:T,errors:E,warns:Wn,desc,steps,dup,disc:(N0-N)+Math.max(0,P0-(P-dup)),wn,wp}}
+const wlabel=L=>({none:"none",auto:`auto (neg ${L.wn.toFixed(2)}, pos ${L.wp.toFixed(2)})`,manual:`manual (${L.wn} / ${L.wp})`})[$("wmode").value];
+function rawName(L){const n=$("sname").value.trim();if(n)return n;if(L.m==="none")return"No sampling (original)";if(L.m==="under"&&$("umode").value==="ratio")return"Undersampling 1:"+$n("uval");return L.steps.join(" + ")+" ("+pp(L.pos/L.total)+" positive)"}
+const stratName=L=>esc(rawName(L)),rat=L=>"1:"+(L.neg/L.pos).toFixed(2).replace(/\.?0+$/,"");
+const nearest=fr=>{const c={A:P0/T0,B:.1667,C:.5};return Object.keys(c).reduce((a,b)=>Math.abs(c[b]-fr)<Math.abs(c[a]-fr)?b:a)};
+const ro=(a,b)=>`<div class="ro"><span>${a}</span><span>${b}</span></div>`;
+const dn=(p,n,t)=>{const c=2*Math.PI*40,fr=p/(p+n);return`<div style="text-align:center"><svg viewBox="0 0 120 120" width="130" role="img" aria-label="${t}: ${pp(fr)} positive"><circle cx="60" cy="60" r="40" fill="none" stroke="#8494a0" stroke-width="18"/><circle cx="60" cy="60" r="40" fill="none" stroke="#b4234f" stroke-width="18" stroke-dasharray="${fr*c} ${c}" transform="rotate(-90 60 60)"/><text x="60" y="64" text-anchor="middle" style="font:600 12px ui-monospace,monospace;fill:#16212b">${pp(fr)}</text></svg><div class="fine">${t}<br>${f(p)} / ${f(n)}</div></div>`};
+function refresh(){const m=meth();$("uf").style.display=m==="under"||m==="comb"?"":"none";$("of").style.display=m==="over"||m==="comb"?"":"none";$("order").disabled=m!=="comb";
+$("upos").disabled=$("ukeep").checked;$("ulab").textContent={ratio:"Negative samples per positive sample",pct:"Target positive-class percentage (%)",count:"Number of negative samples"}[$("umode").value];
+$("olab").textContent=$("omode").value==="pct"?"Target positive-class percentage (%)":"Target negative-to-positive ratio";
+const man=$("wmode").value==="manual";$("wneg").disabled=$("wpos").disabled=!man;$("bseed").textContent=$("gseed").value;
+const L=calc(),bad=L.errors.length>0,V=bad?{pos:P0,neg:N0,total:T0}:L;
+$("lerr").innerHTML=bad?"<ul style='margin:0 0 10px;padding-left:1.1em'>"+L.errors.map(e=>`<li>${e}</li>`).join("")+"</ul><p class='fine'>Charts show the base dataset until the configuration is valid.</p>":"";
+$("sumb").innerHTML=bad?"":ro("Sampling method",ML[L.m])+ro("Ratio (pos : neg)",rat(L))+ro("Class weights",wlabel(L))+ro("Positive samples",f(L.pos))+ro("Negative samples",f(L.neg))+ro("Estimated training windows",f(L.total))+ro("Positive / negative %",pp(L.pos/L.total)+" / "+pp(L.neg/L.total))+ro("Discarded windows",f(L.disc))+ro("Duplicated windows",f(L.dup))+ro("Random seed",$("gseed").value)+ro("Approx. memory (float32)","≈ "+(L.total*WIN_B/1e6).toFixed(1)+" MB");
+$("expl").textContent=bad?"":L.m==="none"?`No sampling is configured: all ${f(P0)} positive and ${f(N0)} negative training windows are kept (${pp(P0/T0)} positive).`:(t=>t[0].toUpperCase()+t.slice(1))(L.desc.join(", then "))+`, giving an estimated training set of ${f(L.total)} windows with a ${pp(L.pos/L.total)} positive-class proportion.`;
+$("lwarn").innerHTML=L.warns.map(w=>"⚠ "+w).join("<br>");$("wwarn").textContent=L.warns.find(w=>w.startsWith("Sampling and"))||"";
+$("dn").innerHTML=dn(P0,N0,"Before")+dn(V.pos,V.neg,"After (est.)");
+const mx=Math.max(N0,V.neg,V.pos),H=110,B=[["Positive",P0,V.pos],["Negative",N0,V.neg]];let sv='<svg class="chart" viewBox="0 0 400 160" role="img" aria-label="Sample counts before and after">';
+B.forEach((g,i)=>[g[1],g[2]].forEach((v,j)=>{const h=v/mx*H,x=70+i*170+j*50;sv+=`<rect x="${x}" y="${130-h}" width="40" height="${h}" fill="${j?"#0f5c63":"#b9c4c9"}"/><text x="${x+20}" y="${124-h}" text-anchor="middle">${f(v)}</text>`}));
+$("bars").innerHTML=sv+B.map((g,i)=>`<text x="${115+i*170}" y="150" text-anchor="middle">${g[0]}</text>`).join("")+"</svg>";
+const ch=(V.total-T0)/T0;$("redb").style.width=Math.min(100,Math.abs(ch)*100)+"%";$("redb").style.background=ch>0?"#c27c0e":"#0f5c63";
+$("redt").textContent=ch<0?`Removed ${f(T0-V.total)} windows (${pp(-ch)} of the training set)`:ch>0?`Added ${f(V.total-T0)} windows (+${pp(ch)})`:"No change in training-set size";
+$("pipe").innerHTML=`<span>Training set · ${f(T0)}</span>`+(bad?"":L.steps.map(s=>"→ <span class='s'>"+s+"</span>").join(""))+`→ <span>Loss weighting: ${bad?"–":wlabel(L)}</span>→ <span>EEGNet</span>`}
+function showRun(){const L=sim.snap,c=L.c;$("esum").className="note simn";$("esum").innerHTML=`<b>Custom configuration: ${L.name}</b> <span class="tag ex">simulated run</span><br>${c.m==="none"?"No sampling":c.desc.join(", then ")}. Estimated training set ${f(c.total)} windows (${f(c.pos)} positive / ${f(c.neg)} negative, ${pp(c.pos/c.total)} positive). Loss weighting: ${L.w}.`}
+/* saved strategies: localStorage with in-memory fallback */
+let mem=[];const lst=()=>{try{return JSON.parse(localStorage.getItem("eeg_strats")||"[]")}catch(e){return mem}},sav=a=>{mem=a;try{localStorage.setItem("eeg_strats",JSON.stringify(a))}catch(e){}};
+function renderSaved(){const a=lst();$("ssel").innerHTML=a.map((s,i)=>`<option value="${i}">${esc(s.name)}</option>`).join("")||"<option>(none saved)</option>";
+$("stbl").innerHTML=a.length?`<thead><tr><th>Name</th><th>Method</th><th>Ratio (pos:neg)</th><th>Est. samples</th><th>Actions</th></tr></thead><tbody>${a.map((s,i)=>`<tr><td>${esc(s.name)} <span class="tag ex">custom config</span></td><td>${s.method}</td><td>${s.ratio}</td><td>${f(s.total)}</td><td><button onclick="loadS(${i})">Load / edit</button> <button class="dng" onclick="delS(${i})">Delete</button></td></tr>`).join("")}</tbody>`:"<tbody><tr><td>No saved strategies yet.</td></tr></tbody>"}
+function loadS(i){const s=lst()[i];if(!s)return;setLab(s.st);refresh();$("smsg").textContent="Loaded “"+s.name+"”. Edit it and press Save Strategy with the same name to overwrite."}
+function delS(i){const a=lst();a.splice(i,1);sav(a);renderSaved()}
+$("labroot").addEventListener("input",refresh);$("labroot").addEventListener("change",refresh);
+$("ssave").onclick=()=>{const L=calc();if(L.errors.length){$("smsg").textContent="Cannot save: "+L.errors[0];return}const name=rawName(L),a=lst().filter(s=>s.name!==name);a.push({name,st:getLab(),method:ML[L.m],ratio:rat(L),total:L.total});sav(a);renderSaved();$("ssel").value=a.length-1;$("smsg").textContent="Saved “"+name+"” (browser only)."};
+$("sload").onclick=()=>loadS(+$("ssel").value);
+$("sreset").onclick=()=>{setLab(DEFL);refresh();$("prev").classList.add("hide");$("smsg").textContent="Strategy reset to defaults."};
+$("sprev").onclick=()=>{const L=calc();$("prev").classList.remove("hide");$("prev").textContent=JSON.stringify({note:"Prototype preview. Not written anywhere; training set only; validation/test unchanged.",name:rawName(L),config:getLab(),estimate:L.errors.length?{errors:L.errors}:{positive:L.pos,negative:L.neg,total:L.total,discarded:L.disc,duplicated:L.dup,weights:wlabel(L)}},null,2)};
+refresh();renderSaved();
+fillJ();hist();draw();showRes("EXP-003");
 </script></body></html>
