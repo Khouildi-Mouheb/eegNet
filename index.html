@@ -5,10 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EEGNet Seizure Detection: Research Notes</title>
 <style>
-:root{--paper:#f2f4f3;--ink:#16212b;--mute:#5b6a74;--rule:#c9d3d1;--trace:#0f5c63;--slate:#8494a0;--sz:#b4234f;--szbg:#f6dfe6;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--serif:Charter,"Bitstream Charter","Iowan Old Style",Georgia,serif}
+:root{--paper:#f2f4f3;--ink:#16212b;--mute:#5b6a74;--rule:#c9d3d1;--A:#8494a0;--B:#0f5c63;--C:#c27c0e;--sz:#b4234f;--szbg:#f6dfe6;--okbg:#e1ecea;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--serif:Charter,"Bitstream Charter","Iowan Old Style",Georgia,serif}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;background:var(--paper);color:var(--ink);font:1.04rem/1.65 var(--serif)}
-a{color:var(--trace)}
+body{margin:0;background:var(--paper);color:var(--ink);font:1.03rem/1.65 var(--serif)}
 .wrap{display:grid;grid-template-columns:190px minmax(0,1fr);gap:56px;max-width:1120px;margin:0 auto;padding:0 28px}
 aside{position:sticky;top:0;align-self:start;padding:48px 0;font:.82rem/1.9 var(--mono)}
 aside b{display:block;font-family:var(--serif);font-size:1rem;margin-bottom:10px}
@@ -16,207 +15,194 @@ aside a{display:block;color:var(--mute);text-decoration:none;border-left:2px sol
 aside a:hover,aside a.on{color:var(--ink);border-color:var(--sz)}
 main{padding-bottom:60px;min-width:0}
 header{padding:56px 0 8px}
-h1{font-size:clamp(2.1rem,5vw,3.4rem);line-height:1.08;letter-spacing:-.02em;margin:0 0 18px;max-width:15em;font-weight:700}
-.lede{font-size:1.2rem;max-width:36em;margin:0 0 6px}
-.trace{margin:26px 0 4px;border-top:1px solid var(--ink);border-bottom:1px solid var(--rule);background:repeating-linear-gradient(90deg,transparent 0 39px,#dfe6e4 39px 40px),repeating-linear-gradient(0deg,transparent 0 39px,#dfe6e4 39px 40px)}
-.trace svg{display:block;width:100%;height:auto}
-.trace path{fill:none;stroke:var(--ink);stroke-width:1.1;stroke-linejoin:round}
-.trace .szp{stroke:var(--sz)}
-.cap{font:.76rem var(--mono);color:var(--mute);margin:6px 0 0}
-section{padding-top:56px;scroll-margin-top:0}
+h1{font-size:clamp(2.1rem,5vw,3.3rem);line-height:1.08;letter-spacing:-.02em;margin:0 0 18px;max-width:15em}
+.lede{font-size:1.18rem;max-width:36em;margin:0 0 6px}
+section{padding-top:60px;scroll-margin-top:0}
 h2{font-size:1.7rem;letter-spacing:-.015em;margin:0 0 8px;line-height:1.2}
-h3{font-size:1.05rem;margin:26px 0 6px}
-p{margin:0 0 12px;max-width:40em}
-.sub{color:var(--mute);max-width:40em}
-.warn{border-left:3px solid var(--sz);padding:2px 0 2px 16px;margin:20px 0;max-width:40em}
+h3{font-size:1.05rem;margin:28px 0 6px}
+p{margin:0 0 12px;max-width:41em}.sub{color:var(--mute)}
+.warn{border-left:3px solid var(--sz);padding:2px 0 2px 16px;margin:20px 0;max-width:41em}
+.tag{display:inline-block;font:700 .8rem var(--mono);color:#fff;padding:2px 9px;margin-right:10px;vertical-align:middle}
 .nums{display:flex;flex-wrap:wrap;border-top:1px solid var(--ink);border-bottom:1px solid var(--rule);margin:22px 0}
-.nums div{flex:1 1 170px;padding:14px 16px 14px 0}
-.nums b{display:block;font:600 1.9rem var(--mono);letter-spacing:-.04em}
-.nums span{font-size:.85rem;color:var(--mute)}
-dl{margin:10px 0;max-width:46em}
-dl div{display:grid;grid-template-columns:200px 1fr;gap:18px;padding:11px 0;border-top:1px solid var(--rule)}
+.nums div{flex:1 1 150px;padding:14px 16px 14px 0}.nums b{display:block;font:600 1.8rem var(--mono);letter-spacing:-.04em}.nums span{font-size:.85rem;color:var(--mute)}
+dl{margin:8px 0;max-width:46em}dl div{display:grid;grid-template-columns:200px 1fr;gap:18px;padding:10px 0;border-top:1px solid var(--rule)}
 dt{font-weight:700}dd{margin:0;color:#34434d}
-dd small{font-family:var(--mono);color:var(--trace);font-size:.8rem}
-.wide{max-width:none}
-ol.flow{list-style:none;margin:18px 0;padding:0 0 0 24px;border-left:2px solid var(--trace);max-width:42em}
-ol.flow li{position:relative;padding:0 0 18px 18px}
-ol.flow li::before{content:"";position:absolute;left:-31px;top:.55em;width:10px;height:10px;background:var(--paper);border:2px solid var(--trace);border-radius:50%}
-ol.flow b{display:block}
-.srow{margin:14px 0;font-size:.9rem}
-.srow .l{display:flex;justify-content:space-between;gap:10px;margin-bottom:5px;flex-wrap:wrap}
-.srow .l span{font-family:var(--mono);font-size:.78rem;color:var(--mute)}
-.stk{display:flex;height:12px;background:var(--rule)}.stk i{display:block}
-.pair{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--ink)}
-.pair>div{padding:18px 28px 18px 0}.pair>div+div{padding-left:28px;border-left:1px solid var(--rule)}
-.pair h3{margin-top:0}
-.big{font:600 3rem/1 var(--mono);letter-spacing:-.05em;margin:8px 0 2px}
-.m{display:flex;justify-content:space-between;font:.84rem var(--mono);padding:6px 0;border-bottom:1px dotted var(--rule)}
-.m span:first-child{color:var(--mute)}
-.fine{font:.76rem/1.6 var(--mono);color:var(--mute);margin-top:12px;overflow-wrap:anywhere}
-.tw{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font:.86rem var(--mono)}
+details{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:16px 0;max-width:46em}
+summary{cursor:pointer;padding:10px 0;font-weight:700}summary:focus-visible{outline:2px solid var(--B)}
+.srow{margin:14px 0;font-size:.9rem}.srow .l{display:flex;justify-content:space-between;gap:10px;margin-bottom:5px;flex-wrap:wrap}.srow .l span{font:.76rem var(--mono);color:var(--mute)}
+.stk{display:flex;height:14px;background:var(--rule)}.stk i{display:block}
+.fine{font:.76rem/1.6 var(--mono);color:var(--mute);margin-top:10px;overflow-wrap:anywhere}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font:.85rem var(--mono)}
 th,td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--rule);white-space:nowrap}
-th{font-weight:600;color:var(--mute);border-bottom:1px solid var(--ink);font-family:var(--serif);font-size:.82rem}
-th:first-child,td:first-child{text-align:left;font-family:var(--serif)}
-.up{color:var(--trace);font-weight:700}.dn{color:var(--sz);font-weight:700}.fl{color:var(--mute)}
-.chart{width:100%;height:auto;display:block;margin-top:10px}.chart text{font-family:var(--mono);font-size:10.5px;fill:var(--mute)}
+th{font:600 .82rem var(--serif);color:var(--mute);border-bottom:1px solid var(--ink)}th:first-child,td:first-child{text-align:left;font-family:var(--serif)}
+td.best{font-weight:800;color:var(--ink);background:#e9efed}td.best::after{content:" ▲";font-size:.65rem;color:var(--B)}
+.up{color:var(--B);font-weight:700}.dn{color:var(--sz);font-weight:700}
+.exp{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--ink);margin-top:16px}
+.exp>div{padding:18px 28px 6px 0}.exp>div+div{padding-left:28px;border-left:1px solid var(--rule)}
+.exp h3{margin-top:0}.big{font:600 3rem/1 var(--mono);letter-spacing:-.05em;margin:6px 0 2px}
+.m{display:flex;justify-content:space-between;font:.84rem var(--mono);padding:6px 0;border-bottom:1px dotted var(--rule)}.m span:first-child{color:var(--mute)}
+.chart{width:100%;height:auto;display:block;margin-top:8px}.chart text{font-family:var(--mono);font-size:10.5px;fill:var(--mute)}
 .key{font:.76rem var(--mono);color:var(--mute);display:flex;gap:18px;flex-wrap:wrap;margin-top:8px}.key i{display:inline-block;width:10px;height:10px;margin-right:6px}
-.mx{display:grid;grid-template-columns:110px 1fr 1fr;font:.8rem var(--mono);max-width:440px}
-.mx>*{padding:12px 10px}.mx .h{color:var(--mute);font-size:.72rem;text-align:center;padding:4px}
-.mx .r{align-self:center;color:var(--mute)}
-.mx .c{text-align:center;font-size:1.5rem;font-weight:600;border:1px solid var(--rule);margin:-1px 0 0 -1px}
-.mx .c small{display:block;font-size:.66rem;font-weight:400;color:var(--mute)}
-.mx .ok{background:#e1ecea;color:var(--trace)}.mx .bad{background:var(--szbg);color:var(--sz)}
-.mxs{display:grid;grid-template-columns:1fr 1fr;gap:36px}
-ul.p{padding-left:1.1em;max-width:40em}ul.p li{margin-bottom:8px}
+.mx{display:grid;grid-template-columns:96px 1fr 1fr;font:.8rem var(--mono);max-width:400px;margin-top:8px}
+.mx>*{padding:11px 8px}.mx .h{color:var(--mute);font-size:.7rem;text-align:center;padding:3px}.mx .r{align-self:center;color:var(--mute);font-size:.72rem}
+.mx .c{text-align:center;font-size:1.4rem;font-weight:600;border:1px solid var(--rule);margin:-1px 0 0 -1px}.mx .c small{display:block;font-size:.64rem;font-weight:400;color:var(--mute)}
+.ok{background:var(--okbg);color:var(--B)}.bad{background:var(--szbg);color:var(--sz)}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}.g2{display:grid;grid-template-columns:1fr 1fr;gap:36px}
+ul.p{padding-left:1.1em;max-width:41em}ul.p li{margin-bottom:8px}
 footer{margin-top:64px;border-top:1px solid var(--ink);padding-top:14px;font:.76rem var(--mono);color:var(--mute)}
-@media(max-width:860px){.wrap{grid-template-columns:1fr;gap:0;padding:0 18px}aside{display:none}.pair,.mxs{grid-template-columns:1fr;gap:0}.pair>div+div{padding-left:0;border-left:0;border-top:1px solid var(--rule)}dl div{grid-template-columns:1fr;gap:2px}}
+@media(max-width:900px){.wrap{grid-template-columns:1fr;gap:0;padding:0 18px}aside{display:none}.exp,.g3,.g2{grid-template-columns:1fr;gap:0}.exp>div+div{padding-left:0;border-left:0;border-top:1px solid var(--rule)}dl div{grid-template-columns:1fr;gap:2px}.g3>div,.g2>div{margin-bottom:20px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
 <body>
 <div class="wrap">
 <aside aria-label="Contents"><b>Contents</b>
-<a href="#intro">Overview</a><a href="#data">Data</a><a href="#model">EEGNet</a><a href="#training">Training</a><a href="#results">Results</a><a href="#undersampling">Undersampling</a><a href="#confusion">Errors</a><a href="#limits">Limits</a></aside>
+<a href="#global">Global view</a><a href="#expA">Experiment A</a><a href="#expB">Experiment B</a><a href="#expC">Experiment C</a><a href="#compare">Comparison</a><a href="#limits">Limits</a></aside>
 <main>
-<header id="intro">
+<header>
 <h1>Finding seizures in two-second slices of EEG</h1>
-<p class="lede">This project trains EEGNet, a compact convolutional neural network built for EEG, to label short EEG windows as seizure or non-seizure. This page shows the data, the test results on unseen patients, and a comparison between the original training run and an undersampled one.</p>
-<div class="trace"><svg id="hero" viewBox="0 0 1000 260" role="img" aria-label="Illustrative EEG trace with a seizure-like burst on the right"></svg></div>
-<p class="cap">Illustrative synthetic signal, not patient data. The red section mimics the rhythmic, high-amplitude look of a seizure.</p>
-<div class="warn"><b>Research only.</b> This is not a clinically validated diagnostic system and must not inform medical decisions.</div>
+<p class="lede">This project trains EEGNet, a compact convolutional neural network designed for EEG-based classification, to label EEG windows as seizure or non-seizure. This page compares three training experiments using results stored from experiment logs. It does not run inference on EEG signals.</p>
+<div class="warn"><b>Research only.</b> These are research results, not a clinically validated diagnostic system.</div>
 </header>
 
-<section id="data">
-<h2>The data</h2>
-<p class="sub">Fixed results taken from the experiment logs.</p>
+<section id="global">
+<h2>Global view</h2>
+<p class="sub">The setup shared by all three experiments, and what differs between them.</p>
 <div class="nums" id="nums"></div>
-<p>Classes are heavily imbalanced: only <b id="p1"></b> of original training windows and <b id="p2"></b> of test windows are seizure. Seizures are rare, so a model can look good on paper while missing most of them.</p>
-<h3>Terms and preprocessing</h3>
-<dl id="terms"></dl>
-<h3>Class balance in each split</h3>
+<h3>Dataset splits</h3>
+<div class="tw"><table id="splits"></table></div>
+<p>Validation and test sets are kept unchanged across all three experiments. Only the training set differs. Balancing the training data does not mean validation and test should be balanced too: leaving them alone keeps the evaluation matched to how rare seizures really are.</p>
+<details><summary>Preprocessing and terms explained</summary><dl id="terms"></dl></details>
+
+<h3>The three experiments</h3>
+<div class="tw"><table id="overview"></table></div>
+<p class="fine">Test metrics at each experiment's selected threshold. ▲ marks the highest value in a column; the highest value alone does not decide the best overall model.</p>
+
+<h3>Training-data distribution</h3>
 <div id="dist"></div>
-<div class="key"><span><i style="background:var(--slate)"></i>non-seizure</span><span><i style="background:var(--sz)"></i>seizure</span></div>
+<div class="key"><span><i style="background:var(--A)"></i>non-seizure</span><span><i style="background:var(--sz)"></i>seizure</span></div>
+<div class="tw" style="margin-top:12px"><table id="disttbl"></table></div>
+<ul class="p" style="margin-top:14px"><li>The original set has far more non-seizure windows than seizure windows.</li><li>1:5 reduces the imbalance while retaining more negative examples.</li><li>1:1 equalizes the class counts but discards more non-seizure training examples.</li></ul>
+
+<details><summary>What the metrics mean</summary><dl id="gloss"></dl></details>
 </section>
 
-<section id="model">
-<h2>How EEGNet works</h2>
-<p class="sub">What happens to one window, in order. Exact operations and intermediate tensor shapes depend on the implementation and configuration used here, so none are listed.</p>
-<ol class="flow">
-<li><b>Input, shape (19, 512)</b>19 EEG channels with 512 time samples each.</li>
-<li><b>Temporal convolution</b>Slides small filters along time to learn useful signal patterns.</li>
-<li><b>Depthwise spatial convolution</b>Learns combinations across channels, meaning which electrode locations work together.</li>
-<li><b>Batch normalization and activation</b>Normalization keeps values stable during training. The activation adds nonlinearity so the network can learn complex patterns.</li>
-<li><b>Pooling and dropout</b>Pooling shrinks the representation. Dropout randomly switches off units during training to limit overfitting.</li>
-<li><b>Separable convolution</b>Learns more temporal features with fewer parameters than a standard convolution.</li>
-<li><b>Classification layer</b>Outputs a score for each class: seizure and non-seizure.</li>
-</ol>
-<p>The filters are learned from the training data. Nobody programmed in what a seizure looks like.</p>
-</section>
+<div id="exps"></div>
 
-<section id="training">
-<h2>Training</h2>
-<dl id="train"></dl>
-<div class="warn"><b>Two separate choices.</b> The best checkpoint is picked by validation PR-AUC. The threshold is picked afterwards by maximizing validation F1. The test set is used for neither.</div>
-</section>
+<section id="compare">
+<h2>Comparison</h2>
+<p class="sub">All three experiments on the same 6,077 test windows from 3 unseen patients.</p>
+<h3>Test metrics</h3>
+<div class="tw"><table id="cmp"></table></div>
+<p class="fine">These are test metrics. ▲ marks the highest value in each row.</p>
+<div class="g2">
+<div><h3>Test metrics, grouped</h3><div id="c1"></div></div>
+<div><h3>Precision against recall</h3><div id="c2"></div><p class="fine">Each point is one experiment at its selected threshold. Axes are truncated.</p></div>
+</div>
+<div class="g2">
+<div><h3>Seizure windows: caught and missed</h3><div id="c3"></div><p class="fine">TP + FN = 224 seizure windows in every case.</p></div>
+<div><h3>Validation against test F1</h3><div id="c4"></div></div>
+</div>
+<div class="key" id="ckey"></div>
 
-<section id="results">
-<h2>Results on the test set</h2>
-<p class="sub">Both models were scored on the same 6,077 windows from 3 patients the model never saw.</p>
-<div class="pair" id="pair"></div>
-<h3>Every metric, validation and test</h3>
-<div class="tw"><table id="tbl"></table></div>
-<p class="fine">pp = percentage points. Change = undersampled minus original, on test.</p>
-<h3>Test metrics compared</h3>
-<div id="bars"></div>
-<div class="key"><span><i style="background:var(--slate)"></i>Original EEGNet</span><span><i style="background:var(--trace)"></i>Undersampled 1:5</span></div>
-<p class="fine">Y-axis starts at 40% so differences are visible.</p>
-<h3>What the metrics mean</h3>
-<dl id="gloss"></dl>
-<div class="warn"><b>Why accuracy alone misleads.</b> A model that always said "non-seizure" would score <span id="naive"></span> accuracy here (5,853 of 6,077 windows) and catch no seizures at all.</div>
-</section>
+<h3>Confusion matrices</h3>
+<div class="g3" id="mxs"></div>
+<dl><div><dt>TN, true negative</dt><dd>Non-seizure correctly predicted as non-seizure.</dd></div><div><dt>FP, false positive</dt><dd>Non-seizure incorrectly predicted as seizure.</dd></div><div><dt>FN, false negative</dt><dd>Seizure incorrectly predicted as non-seizure.</dd></div><div><dt>TP, true positive</dt><dd>Seizure correctly predicted as seizure.</dd></div></dl>
+<p class="fine">Rows are actual classes, columns are predicted classes. Green cells are correct, red cells are errors.</p>
 
-<section id="undersampling">
-<h2>The undersampling experiment</h2>
-<p>The original training set has 16,575 non-seizure windows against 792 seizure windows. To test whether a more balanced set helps, the second run keeps all 792 seizure windows and picks five non-seizure windows for each (3,960). Only the training distribution changes. Validation and test sets are untouched.</p>
-<div class="tw"><table id="delta"></table></div>
-<p class="fine">PR-AUC is on a 0 to 1 scale, as recorded.</p>
-<p style="margin-top:16px">The selected operating point improved: higher F1 and recall, slightly higher precision, and almost no change in PR-AUC. That suggests a better threshold-level trade-off, but it does not prove undersampling helps on other datasets or patients.</p>
-</section>
-
-<section id="confusion">
-<h2>Where the errors are</h2>
-<p class="sub">Rows are the true class, columns are what the model predicted.</p>
-<div class="mxs" id="mxs"></div>
-<dl>
-<div><dt>True negative</dt><dd>A non-seizure window, correctly classified.</dd></div>
-<div><dt>False positive</dt><dd>A non-seizure window wrongly flagged as seizure.</dd></div>
-<div><dt>False negative</dt><dd>A seizure window the model missed.</dd></div>
-<div><dt>True positive</dt><dd>A seizure window correctly detected.</dd></div>
-</dl>
+<h3>Interpretation</h3>
+<ul class="p">
+<li>The original model reached a test F1-score of 64.40%.</li>
+<li>The 1:5 model improved test F1 to 70.47% and recall to 63.39%, and had the highest test precision (79.33%) and PR-AUC (0.7443).</li>
+<li>The 1:1 model had the highest test F1 (72.73%), recall (71.43%) and ROC-AUC (0.9857).</li>
+<li id="delta"></li>
+<li>The 1:1 model has lower test precision and PR-AUC than the 1:5 model.</li>
+<li>This is a trade-off between detecting more seizure windows and raising more false alarms. The best experiment depends on the evaluation objective.</li>
+<li>1:1 is best on test F1 here, but it should not automatically be called the best model for every purpose.</li>
+</ul>
+<details><summary>Reading the three kinds of score</summary><dl>
+<div><dt>F1</dt><dd>Combines precision and recall at the one selected threshold.</dd></div>
+<div><dt>PR-AUC</dt><dd>Summarizes the precision-recall trade-off across thresholds.</dd></div>
+<div><dt>ROC-AUC</dt><dd>Measures ranking discrimination across thresholds.</dd></div>
+<div><dt>Accuracy</dt><dd>Can mislead when seizure windows are uncommon: always answering "non-seizure" would score <span id="naive"></span> on this test set.</dd></div></dl></details>
 </section>
 
 <section id="limits">
-<h2>Findings and limits</h2>
-<h3>What happened</h3>
-<ul class="p"><li>The undersampled model detected more seizure windows in the test set.</li><li>Recall improved and precision rose slightly in this experiment.</li><li>PR-AUC barely moved, so the overall precision-recall ranking changed very little.</li></ul>
-<h3>What to be careful about</h3>
-<ul class="p"><li>Only three patients are in the test set, so results may not generalize.</li><li>Overlapping windows are correlated and are not independent observations.</li><li>A high threshold is not clinical certainty. Predicted probabilities may be poorly calibrated.</li><li>These results are experimental and establish neither clinical safety nor diagnostic accuracy.</li></ul>
-<h3>Recorded notes</h3>
-<ul class="p" id="notes"></ul>
+<h2>Limitations and cautions</h2>
+<ul class="p">
+<li>Only three patients are in the test set, so generalization claims are limited.</li>
+<li>Windows overlap by 50% and share samples, so neighboring windows are correlated, not independent.</li>
+<li>Thresholds were selected on validation data, not on the test set.</li>
+<li>A high threshold does not mean calibrated probabilities or clinical certainty.</li>
+<li>Results can vary with random undersampling and training randomness.</li>
+<li>These are research results, not evidence of clinical safety or a validated diagnostic system.</li>
+<li>They do not show that 1:1 balancing will always beat 1:5 undersampling or the original data.</li>
+</ul>
 </section>
-<footer>EEGNet research notes · static results · not for clinical use</footer>
+<footer>EEGNet research notes · static stored results · not for clinical use</footer>
 </main>
 </div>
 <script>
-const D={ds:{train_patients:12,validation_patients:4,test_patients:3,tro:17367,tso:792,tno:16575,tru:4752,tsu:792,tnu:3960,vw:5550,vs:166,vn:5384,tw:6077,ts:224,tn:5853},
-E:[{id:"original",name:"Original EEGNet",desc:"Original imbalanced training set",ckpt:"processed_data/models/eegnet_best.pth",ep:7,th:0.996769,v:{accuracy:.9847,precision:.8584,recall:.5843,f1:.6953,pr_auc:.6153,roc_auc:.9143},t:{accuracy:.9776,precision:.7785,recall:.5491,f1:.644,pr_auc:.7427,roc_auc:.9797},cm:[[5818,35],[101,123]]},
-{id:"undersampled",name:"Undersampled 1:5",desc:"All seizure windows plus five non-seizure windows per seizure window",ckpt:"processed_data/models/eegnet_undersampled_best.pth",ep:12,th:0.995571,v:{accuracy:.9849,precision:.8254,recall:.6265,f1:.7123,pr_auc:.6243,roc_auc:.9299},t:{accuracy:.9804,precision:.7933,recall:.6339,f1:.7047,pr_auc:.7443,roc_auc:.9844},cm:[[5816,37],[82,142]]}],
-notes:["The test set contains 3 patients, so patient-level generalization remains uncertain.","Thresholds were selected on validation data by maximizing F1; test data should not be used to tune thresholds.","These are research results, not a clinically validated seizure detector.","The reported test metrics are copied from the experiment logs."]};
-const d=D.ds,E=D.E,$=i=>document.getElementById(i),pc=(v,n=2)=>(v*100).toFixed(n)+"%",f=n=>n.toLocaleString("en-US");
-const M=[["accuracy","Accuracy","Share of all windows classified correctly."],["precision","Precision","Of windows predicted as seizure, the share that truly are seizure."],["recall","Recall (sensitivity)","Of real seizure windows, the share the model detected."],["f1","F1-score","Harmonic mean of precision and recall. It is low if either one is low."],["pr_auc","PR-AUC","Summarizes the precision-recall trade-off across all thresholds. Especially useful with imbalanced classes."],["roc_auc","ROC-AUC","How well the model ranks seizure windows above non-seizure windows across all thresholds."]];
+const S={train:[12,17367,792,16575],val:[4,5550,166,5384],test:[3,6077,224,5853]};
+const X=[
+{k:"A",name:"Original EEGNet",short:"Original",col:"#8494a0",tr:[17367,792,16575],cw:"Class-weighted cross-entropy loss on the original, imbalanced training set.",desc:["Uses the original training dataset: 17,367 windows, 792 seizure and 16,575 non-seizure."],ep:7,th:.996769,v:{accuracy:.9847,precision:.8584,recall:.5843,f1:.6953,pr_auc:.6153,roc_auc:.9143},t:{accuracy:.9776,precision:.7785,recall:.5491,f1:.644,pr_auc:.7427,roc_auc:.9797},cm:[[5818,35],[101,123]],rep:[.78,.55,.64,224],ck:"processed_data/models/eegnet_best.pth"},
+{k:"B",name:"EEGNet, 1:5 undersampling",short:"1:5 undersampled",col:"#0f5c63",tr:[4752,792,3960],cw:"Class weights are recalculated from the new training labels.",desc:["Keeps all seizure windows and randomly selects five non-seizure windows for each.","Training set: 4,752 windows with a 1:5 seizure to non-seizure ratio."],ep:12,th:.995571,v:{accuracy:.9849,precision:.8254,recall:.6265,f1:.7123,pr_auc:.6243,roc_auc:.9299},t:{accuracy:.9804,precision:.7933,recall:.6339,f1:.7047,pr_auc:.7443,roc_auc:.9844},cm:[[5816,37],[82,142]],rep:[.79,.63,.7,224],ck:"processed_data/models/eegnet_undersampled_best.pth"},
+{k:"C",name:"EEGNet, 1:1 balanced",short:"1:1 balanced",col:"#c27c0e",tr:[1584,792,792],cw:"The training set is balanced, and the calculated class weights are [1.0, 1.0].",desc:["Keeps all 792 seizure windows and randomly selects exactly 792 non-seizure windows.","Same EEGNet architecture and general training procedure."],ep:16,th:.97505,v:{accuracy:.9852,precision:.8333,recall:.6325,f1:.7192,pr_auc:.6209,roc_auc:.9222},t:{accuracy:.9803,precision:.7407,recall:.7143,f1:.7273,pr_auc:.7131,roc_auc:.9857},cm:[[5797,56],[64,160]],rep:[.74,.71,.73,224],ck:"processed_data/models/eegnet_balanced_best.pth"}];
+const M=[["accuracy","Accuracy","Share of all windows classified correctly."],["precision","Precision","Of windows predicted as seizure, the share that truly are seizure."],["recall","Recall (sensitivity)","Of actual seizure windows, the share the model detected."],["f1","F1-score","Harmonic mean of precision and recall at the selected threshold."],["pr_auc","PR-AUC","Precision-recall trade-off across thresholds. Especially useful with imbalanced classes."],["roc_auc","ROC-AUC","How well the model ranks seizure windows above non-seizure windows across thresholds."]];
+const $=i=>document.getElementById(i),f=n=>n.toLocaleString("en-US"),pc=(v,n=2)=>(v*100).toFixed(n)+"%",auc=k=>k.endsWith("auc"),fm=(k,v)=>auc(k)?v.toFixed(4):pc(v),sn=m=>m[1].replace(" (sensitivity)","");
+const tag=e=>`<span class="tag" style="background:${e.col}">${e.k}</span>`;
 
-// hero: synthetic EEG, seeded
-(function(){let s=7;const r=()=>(s=(s*16807)%2147483647)/2147483647-.5;
-let h="";const ch=6,W=1000,H=260,sz=640;
-for(let c=0;c<ch;c++){const y=26+c*42;let a="",b="",ph=r()*6,lp=0;
-for(let x=0;x<=W;x+=3){lp=lp*.7+r()*.6;let v=lp*9+Math.sin(x/38+ph)*4;
-if(x>=sz){const k=Math.min(1,(x-sz)/40);v=v*(1-k)+k*(Math.sin(x/9+c*.5)*17+r()*5)}
-const p=(x?"L":"M")+x+" "+(y+v).toFixed(1)+" ";if(x<=sz)a+=p;if(x>=sz-3)b+=(b?p:"M"+x+" "+(y+v).toFixed(1)+" ")}
-h+=`<path d="${a}"/><path class="szp" d="${b}"/>`}
-$("hero").innerHTML=`<rect x="${sz}" y="0" width="${W-sz}" height="${H}" fill="#b4234f" opacity=".07"/>${h}<text x="${sz+8}" y="${H-8}" font-family="monospace" font-size="11" fill="#b4234f">seizure-like activity</text><text x="8" y="${H-8}" font-family="monospace" font-size="11" fill="#5b6a74">19 channels × 2 s (6 shown)</text>`;
-document.querySelectorAll(".trace path").forEach(p=>{if(matchMedia("(prefers-reduced-motion:reduce)").matches)return;const L=p.getTotalLength();p.style.strokeDasharray=L;p.style.strokeDashoffset=L;p.getBoundingClientRect();p.style.transition="stroke-dashoffset 2.4s ease-out";p.style.strokeDashoffset=0})})();
+$("nums").innerHTML=[["19","EEG channels"],["256 Hz","sampling rate"],["512","samples per 2 s window"],["3","experiments"]].map(x=>`<div><b>${x[0]}</b><span>${x[1]}</span></div>`).join("");
+$("splits").innerHTML=`<thead><tr><th>Split</th><th>Patients</th><th>Windows</th><th>Seizure</th><th>Non-seizure</th></tr></thead><tbody>${[["Training, original",S.train],["Validation",S.val],["Test",S.test]].map(([n,r])=>`<tr><td>${n}</td><td>${r[0]}</td><td>${f(r[1])}</td><td>${r[2]}</td><td>${f(r[3])}</td></tr>`).join("")}</tbody>`;
+$("terms").innerHTML=[["EEG signal","Electrical activity of the brain recorded with electrodes on the scalp."],["19 channels","Each channel records from a different electrode location."],["256 Hz","256 measurements per second, per channel."],["Two-second windows","2 s × 256 Hz = 512 time samples per channel per model input."],["50% overlap","Consecutive windows share half their samples."],["Bandpass 0.5-40 Hz","Keeps frequencies in this range and attenuates those outside it."],["Window label","Seizure when at least 50% of the window's samples are labeled seizure."],["Patient-level split","StratifiedGroupKFold keeps each patient in only one of training, validation and test, so the test measures generalization to unseen patients."],["Checkpoint and threshold","Best checkpoint: chosen by validation PR-AUC. Threshold: chosen by maximizing validation F1. These are separate choices and the test set is used for neither."]].map(t=>`<div><dt>${t[0]}</dt><dd>${t[1]}</dd></div>`).join("");
+$("gloss").innerHTML=M.map(m=>`<div><dt>${m[1]}</dt><dd>${m[2]}</dd></div>`).join("")+`<div><dt>Confusion matrix</dt><dd>Counts of TN, FP, FN and TP. Shown for each experiment below.</dd></div>`;
 
-$("nums").innerHTML=[[f(d.tw),"test windows, "+d.test_patients+" patients"],[d.ts,"test seizure windows"],[f(d.tro),"original training windows"],[f(d.tru),"undersampled training windows"]].map(x=>`<div><b>${x[0]}</b><span>${x[1]}</span></div>`).join("");
-$("p1").textContent=pc(d.tso/d.tro,1);$("p2").textContent=pc(d.ts/d.tw,1);$("naive").textContent=pc(d.tn/d.tw,1);
+function best(k){return Math.max(...X.map(e=>e.t[k]))}
+const bc=(k,e)=>e.t[k]===best(k)?' class="best"':"";
+$("overview").innerHTML=`<thead><tr><th>Experiment</th><th>Training windows</th><th>Test F1</th><th>Test precision</th><th>Test recall</th></tr></thead><tbody>${X.map(e=>`<tr><td>${tag(e)}${e.short}</td><td>${f(e.tr[0])}</td>${["f1","precision","recall"].map(k=>`<td${bc(k,e)}>${pc(e.t[k])}</td>`).join("")}</tr>`).join("")}</tbody>`;
+$("dist").innerHTML=X.map(e=>`<div class="srow"><div class="l"><b>${tag(e)}${e.short}</b><span>${f(e.tr[0])} windows · ${e.tr[1]} seizure (${pc(e.tr[1]/e.tr[0])})</span></div><div class="stk" role="img" aria-label="${e.short}: ${pc(e.tr[1]/e.tr[0])} seizure"><i style="width:${e.tr[2]/e.tr[0]*100}%;background:var(--A)"></i><i style="width:${e.tr[1]/e.tr[0]*100}%;background:var(--sz)"></i></div></div>`).join("");
+$("disttbl").innerHTML=`<thead><tr><th>Experiment</th><th>Seizure</th><th>Non-seizure</th><th>Total</th></tr></thead><tbody>${X.map(e=>`<tr><td>${e.short}</td><td>${e.tr[1]} (${pc(e.tr[1]/e.tr[0])})</td><td>${f(e.tr[2])} (${pc(e.tr[2]/e.tr[0])})</td><td>${f(e.tr[0])}</td></tr>`).join("")}</tbody>`;
 
-const T=[["EEG signal","Electrical activity of the brain, recorded with electrodes on the scalp."],["19 channels","Each channel records from a different electrode location."],["256 Hz sampling","256 measurements per second, for each channel."],["Two-second windows","2 s × 256 Hz = 512 time samples per channel per model input."],["50% overlap","Consecutive windows share half their samples, so neighbours look alike."],["Bandpass, 0.5–40 Hz","Keeps frequencies in this range and attenuates those outside it."],["Window labels","A window counts as seizure when at least 50% of its samples are labeled seizure."],["Normalization","Signal values are rescaled so the model trains more effectively."],["Patient-level split",`Patients are kept apart across training (${d.train_patients}), validation (${d.validation_patients}) and test (${d.test_patients}). This reduces patient overlap and tests generalization to unseen patients.`]];
-$("terms").innerHTML=T.map(t=>`<div><dt>${t[0]}</dt><dd>${t[1]}</dd></div>`).join("");
+// charts
+function grouped(el,keys,series,o){const W=640,H=270,L=42,B=30,T=14,gw=(W-L-8)/keys.length,ph=H-B-T,[lo,hi]=[o.min,o.max];let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.label}">`;
+for(let i=0;i<=3;i++){const y=T+ph-ph*i/3,v=lo+(hi-lo)*i/3;s+=`<line x1="${L}" x2="${W-8}" y1="${y}" y2="${y}" stroke="#c9d3d1"/><text x="${L-6}" y="${y+4}" text-anchor="end">${o.tick(v)}</text>`}
+const n=series.length,bw=Math.min(26,(gw-12)/n-3);
+keys.forEach((k,i)=>{const x0=L+i*gw+(gw-n*(bw+3))/2;series.forEach((q,j)=>{const v=q.vals[i],h=(v-lo)/(hi-lo)*ph,x=x0+j*(bw+3);s+=`<rect x="${x}" y="${T+ph-h}" width="${bw}" height="${h}" fill="${q.col}"><title>${q.name}: ${o.tip(v)}</title></rect>`+(o.val?`<text x="${x+bw/2}" y="${T+ph-h-4}" text-anchor="middle" style="font-size:9px">${o.val(v)}</text>`:"")});s+=`<text x="${L+i*gw+gw/2}" y="${H-10}" text-anchor="middle">${k}</text>`});
+el.innerHTML=s+"</svg>"}
+const ser=g=>X.map(e=>({name:e.short,col:e.col,vals:g(e)}));
+const pcOpt=(l,min)=>({label:l,min,max:1,tick:v=>Math.round(v*100)+"%",tip:v=>pc(v),val:v=>(v*100).toFixed(0)});
+function expCharts(e){grouped($("v"+e.k),M.map(sn),[{name:"Validation",col:"#b9c4c9",vals:M.map(m=>e.v[m[0]])},{name:"Test",col:e.col,vals:M.map(m=>e.t[m[0]])}],pcOpt("Validation versus test metrics for "+e.short,.4))}
 
-$("dist").innerHTML=[["Original training",d.tno,d.tso,d.tro],["Undersampled training",d.tnu,d.tsu,d.tru],["Validation",d.vn,d.vs,d.vw],["Test",d.tn,d.ts,d.tw]].map(r=>`<div class="srow"><div class="l"><b>${r[0]}</b><span>${f(r[3])} windows · ${f(r[2])} seizure (${pc(r[2]/r[3],1)})</span></div><div class="stk" role="img" aria-label="${r[0]}: ${pc(r[2]/r[3],1)} seizure"><i style="width:${r[1]/r[3]*100}%;background:var(--slate)"></i><i style="width:${r[2]/r[3]*100}%;background:var(--sz)"></i></div></div>`).join("");
+// experiment sections
+$("exps").innerHTML=X.map(e=>{const c=e.cm,w=e.tr;return`<section id="exp${e.k}"><h2>${tag(e)}Experiment ${e.k}: ${e.name}</h2>
+<ul class="p" style="margin-bottom:6px">${e.desc.map(d=>`<li>${d}</li>`).join("")}<li>Validation and test sets are unchanged.</li></ul>
+<div class="exp"><div><h3>Test metrics</h3><div class="big">${pc(e.t.f1)}</div><p style="color:var(--mute);margin:0 0 10px">test F1-score</p>${M.slice(0,6).filter(m=>m[0]!=="f1").map(m=>`<div class="m"><span>${sn(m)}</span><span>${fm(m[0],e.t[m[0]])}</span></div>`).join("")}</div>
+<div><h3>Training and threshold</h3><div class="m"><span>Training windows</span><span>${f(w[0])}</span></div><div class="m"><span>Seizure / non-seizure</span><span>${w[1]} / ${f(w[2])}</span></div><div class="m"><span>Seizure proportion</span><span>${pc(w[1]/w[0])}</span></div><div class="m"><span>Best epoch</span><span>${e.ep}</span></div><div class="m"><span>Best validation PR-AUC</span><span>${e.v.pr_auc.toFixed(4)}</span></div><div class="m"><span>Selected threshold</span><span>${e.th.toFixed(6)}</span></div><p class="fine">${e.cw}<br>Best checkpoint by validation PR-AUC; threshold by maximizing validation F1.<br>checkpoint: ${e.ck}</p></div></div>
+<div class="g2"><div><h3>Validation and test metrics</h3><div id="v${e.k}"></div><div class="key"><span><i style="background:#b9c4c9"></i>validation</span><span><i style="background:${e.col}"></i>test</span></div><p class="fine">Y-axis starts at 40%.</p></div>
+<div><h3>Test confusion matrix</h3><div class="mx"><span></span><span class="h">predicted<br>non-seizure</span><span class="h">predicted<br>seizure</span><span class="r">actual non-seizure</span><div class="c ok">${f(c[0][0])}<small>TN</small></div><div class="c bad">${c[0][1]}<small>FP</small></div><span class="r">actual seizure</span><div class="c bad">${c[1][0]}<small>FN</small></div><div class="c ok">${c[1][1]}<small>TP</small></div></div><p class="fine">Seizure class report: precision ${e.rep[0]}, recall ${e.rep[1]}, F1 ${e.rep[2]}, support ${e.rep[3]}.</p></div></div>
+<details><summary>Validation metrics, in full</summary><div class="tw"><table><thead><tr><th>Metric</th><th>Validation</th><th>Test</th></tr></thead><tbody>${M.map(m=>`<tr><td>${sn(m)}</td><td>${fm(m[0],e.v[m[0]])}</td><td>${fm(m[0],e.t[m[0]])}</td></tr>`).join("")}</tbody></table></div></details></section>`}).join("");
+X.forEach(expCharts);
 
-$("train").innerHTML=[["Training set",`Used to learn the model's parameters. ${d.train_patients} patients.`],["Validation set",`Used to monitor performance, pick the best checkpoint and choose the threshold. ${d.validation_patients} patients.`],["Test set",`Used only for the final score. Never used for tuning. ${d.test_patients} patients.`],["Cross-entropy loss","Measures the gap between predicted class scores and the true labels."],["AdamW","The optimizer that updates parameters during training."],["Class-weighted loss","Counts the rarer seizure class for more."],["Scheduler, early stopping","The scheduler adjusts the learning rate. Early stopping ends training when validation stops improving."],["Validation PR-AUC",`Picks the best checkpoint. Best epochs: ${E[0].ep} and ${E[1].ep}.`],["Threshold",`A window is called seizure when its predicted probability reaches this cut-off. Chosen by maximizing validation F1: <small>${E[0].th} and ${E[1].th}</small>.`]].map(t=>`<div><dt>${t[0]}</dt><dd>${t[1]}</dd></div>`).join("");
+// comparison
+$("cmp").innerHTML=`<thead><tr><th>Test metric</th>${X.map(e=>`<th>${e.short}</th>`).join("")}</tr></thead><tbody>${M.map(m=>`<tr><td>${sn(m)}</td>${X.map(e=>`<td${bc(m[0],e)}>${fm(m[0],e.t[m[0]])}</td>`).join("")}</tr>`).join("")}</tbody>`;
+$("ckey").innerHTML=X.map(e=>`<span><i style="background:${e.col}"></i>${e.short}</span>`).join("");
+grouped($("c1"),M.map(sn),ser(e=>M.map(m=>e.t[m[0]])),pcOpt("Test metrics, three experiments",.4));
+grouped($("c3"),["TP (caught)","FN (missed)","FP (false alarms)"],ser(e=>[e.cm[1][1],e.cm[1][0],e.cm[0][1]]),{label:"Counts of true positives, false negatives and false positives",min:0,max:180,tick:v=>Math.round(v),tip:v=>v+" windows",val:v=>v});
+grouped($("c4"),["Validation F1","Test F1"],ser(e=>[e.v.f1,e.t.f1]),{label:"Validation versus test F1",min:.5,max:.8,tick:v=>Math.round(v*100)+"%",tip:v=>pc(v),val:v=>(v*100).toFixed(1)});
+(function(){const W=640,H=270,L=46,B=34,T=12,pl=.5,ph_=.8,rl=.7,rh=.85;let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Precision against recall">`;
+const px=r=>L+(r-pl)/(ph_-pl)*(W-L-14),py=p=>T+(rh-p)/(rh-rl)*(H-B-T);
+for(let r=.5;r<=.801;r+=.1)s+=`<line x1="${px(r)}" x2="${px(r)}" y1="${T}" y2="${H-B}" stroke="#c9d3d1"/><text x="${px(r)}" y="${H-14}" text-anchor="middle">${Math.round(r*100)}%</text>`;
+for(let p=.7;p<=.851;p+=.05)s+=`<line x1="${L}" x2="${W-14}" y1="${py(p)}" y2="${py(p)}" stroke="#c9d3d1"/><text x="${L-6}" y="${py(p)+4}" text-anchor="end">${Math.round(p*100)}%</text>`;
+X.forEach(e=>{const x=px(e.t.recall),y=py(e.t.precision);s+=`<circle cx="${x}" cy="${y}" r="8" fill="${e.col}"><title>${e.short}: precision ${pc(e.t.precision)}, recall ${pc(e.t.recall)}</title></circle><text x="${x+12}" y="${y+4}" style="fill:#16212b">${e.k}</text>`});
+$("c2").innerHTML=s+`<text x="${(W+L)/2}" y="${H-1}" text-anchor="middle">recall (x), precision (y)</text></svg>`})();
 
-$("pair").innerHTML=E.map(e=>`<div><h3>${e.name}</h3><p style="color:var(--mute);margin:0">${e.desc}</p><div class="big">${pc(e.t.f1)}</div><p style="margin:0 0 10px;color:var(--mute)">test F1-score</p>${["precision","recall","pr_auc","roc_auc","accuracy"].map(k=>`<div class="m"><span>${M.find(m=>m[0]===k)[1].replace(" (sensitivity)","")}</span><span>${pc(e.t[k])}</span></div>`).join("")}<div class="m"><span>Threshold</span><span>${e.th.toFixed(6)}</span></div><div class="m"><span>Best epoch</span><span>${e.ep}</span></div><p class="fine">checkpoint: ${e.ckpt}</p></div>`).join("");
+$("mxs").innerHTML=X.map(e=>{const c=e.cm;return`<div><h3 style="margin-top:0">${tag(e)}${e.short}</h3><div class="mx" style="grid-template-columns:70px 1fr 1fr"><span></span><span class="h">pred.<br>non-seiz.</span><span class="h">pred.<br>seizure</span><span class="r">actual non-seiz.</span><div class="c ok">${f(c[0][0])}<small>TN</small></div><div class="c bad">${c[0][1]}<small>FP</small></div><span class="r">actual seizure</span><div class="c bad">${c[1][0]}<small>FN</small></div><div class="c ok">${c[1][1]}<small>TP</small></div></div></div>`}).join("");
+const b=X[1].cm,c3=X[2].cm;
+$("delta").textContent=`Compared with the 1:5 model, the 1:1 model detected ${c3[1][1]-b[1][1]} additional seizure windows (${c3[1][1]} true positives instead of ${b[1][1]}) and produced ${c3[0][1]-b[0][1]} additional false positives (${c3[0][1]} instead of ${b[0][1]}).`;
+$("naive").textContent=pc(S.test[3]/S.test[1],1);
 
-const cls=x=>x>.00005?"up":x<-.00005?"dn":"fl",sg=x=>(x>0?"+":"")+(x*100).toFixed(2)+" pp";
-$("tbl").innerHTML=`<thead><tr><th>Metric</th><th>Original val</th><th>Original test</th><th>Undersampled val</th><th>Undersampled test</th><th>Test change</th></tr></thead><tbody>${M.map(m=>{const k=m[0],x=E[1].t[k]-E[0].t[k];return`<tr><td>${m[1].replace(" (sensitivity)","")}</td><td>${pc(E[0].v[k])}</td><td>${pc(E[0].t[k])}</td><td>${pc(E[1].v[k])}</td><td>${pc(E[1].t[k])}</td><td class="${cls(x)}">${sg(x)}</td></tr>`}).join("")}</tbody>`;
-$("gloss").innerHTML=M.map(m=>`<div><dt>${m[1]}</dt><dd>${m[2]}</dd></div>`).join("")+`<div><dt>Confusion matrix</dt><dd>A table of true negatives, false positives, false negatives and true positives. See below.</dd></div>`;
-
-function bars(){const keys=M.map(m=>m[1].replace(" (sensitivity)","")),W=720,H=290,L=40,B=34,T=14,pw=W-L-8,ph=H-B-T,gw=pw/6,y0=.4,S=[["#8494a0",E[0]],["#0f5c63",E[1]]];let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Test metrics, original versus undersampled">`;
-for(let i=0;i<=3;i++){const y=T+ph-ph*i/3;s+=`<line x1="${L}" x2="${W-8}" y1="${y}" y2="${y}" stroke="#c9d3d1"/><text x="${L-6}" y="${y+4}" text-anchor="end">${Math.round((y0+(1-y0)*i/3)*100)}%</text>`}
-M.forEach((m,i)=>{const bw=30,x0=L+i*gw+(gw-2*bw-4)/2;S.forEach((q,j)=>{const v=q[1].t[m[0]],h=(v-y0)/(1-y0)*ph,x=x0+j*(bw+4);s+=`<rect x="${x}" y="${T+ph-h}" width="${bw}" height="${h}" fill="${q[0]}"><title>${q[1].name}: ${pc(v)}</title></rect><text x="${x+bw/2}" y="${T+ph-h-5}" text-anchor="middle">${(v*100).toFixed(1)}</text>`});s+=`<text x="${L+i*gw+gw/2}" y="${H-12}" text-anchor="middle">${keys[i]}</text>`});
-$("bars").innerHTML=s+"</svg>"}bars();
-
-$("delta").innerHTML=`<thead><tr><th>Test metric</th><th>Original</th><th>Undersampled</th><th>Change</th></tr></thead><tbody>${[["F1-score","f1"],["Recall","recall"],["Precision","precision"],["PR-AUC","pr_auc"]].map(([n,k])=>{const a=E[0].t[k],b=E[1].t[k],p=k==="pr_auc";return`<tr><td>${n}</td><td>${p?a.toFixed(4):pc(a)}</td><td>${p?b.toFixed(4):pc(b)}</td><td class="${cls(b-a)}">${p?(b-a>0?"+":"")+(b-a).toFixed(4):sg(b-a)}</td></tr>`}).join("")}</tbody>`;
-
-$("mxs").innerHTML=E.map(e=>{const m=e.cm;return`<div><h3 style="margin-top:0">${e.name}</h3><div class="mx"><span></span><span class="h">predicted<br>non-seizure</span><span class="h">predicted<br>seizure</span><span class="r">actual non-seizure</span><div class="c ok">${f(m[0][0])}<small>TN</small></div><div class="c bad">${m[0][1]}<small>FP</small></div><span class="r">actual seizure</span><div class="c bad">${m[1][0]}<small>FN</small></div><div class="c ok">${m[1][1]}<small>TP</small></div></div></div>`}).join("");
-
-$("notes").innerHTML=D.notes.map(n=>`<li>${n}</li>`).join("");
-
-// highlight current section in rail
 const links=[...document.querySelectorAll("aside a")],io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)links.forEach(l=>l.classList.toggle("on",l.getAttribute("href")==="#"+e.target.id))}),{rootMargin:"-20% 0px -70% 0px"});
-document.querySelectorAll("header[id],section[id]").forEach(s=>io.observe(s));
+document.querySelectorAll("section[id]").forEach(s=>io.observe(s));
 </script>
 </body>
 </html>
